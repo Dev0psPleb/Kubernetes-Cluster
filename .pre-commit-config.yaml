@@ -1,0 +1,22 @@
+repos:
+- repo: https://github.com/antonbabenko/pre-commit-terraform
+  rev: v1.62.3 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
+  hooks:
+    - id: terraform_fmt
+      args:
+        - --args=-write=true
+        - --args=-recursive
+    - id: terraform_validate
+      args:
+        - --args=-json
+    - id: checkov
+      args: [
+        "-d", "./terraform", 
+        "--framework", "terraform"
+      ]
+        
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0
+  hooks:
+  - id: detect-aws-credentials
+  - id: detect-private-key
