@@ -1,0 +1,4 @@
+---
+# tasks file for kubernetes.common
+- include: users.yml
+- include: install-k8s.yml

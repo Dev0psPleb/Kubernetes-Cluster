@@ -1,3 +1,13 @@
+variable "build_repo" {
+  description = "Version Control Repository"
+  default     = "https://github.com/RalphBrynard/Kubernetes-Cluster.git"
+}
+
+variable "build_branch" {
+  description = "Repository build branch"
+  default     = "main"
+}
+
 variable "cluster" {
   description = "vSphere Datacenter compute cluster"
   type        = string
@@ -66,7 +76,7 @@ variable "private_key" {
 variable "ram_size" {
   description = "Memory to allocate for the VM"
   type        = number
-  default     = 4096
+  default     = 2048
 }
 
 variable "ssh_user" {

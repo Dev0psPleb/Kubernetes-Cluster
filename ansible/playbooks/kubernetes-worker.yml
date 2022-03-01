@@ -1,0 +1,5 @@
+- hosts: workers
+  gather_facts: true
+  become: true
+  roles:
+    - kubernetes.worker
