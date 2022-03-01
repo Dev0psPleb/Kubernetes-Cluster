@@ -70,16 +70,6 @@ resource "null_resource" "ansible" {
 
     provisioner "local-exec" {
         working_dir = "../ansible"
-        command     = "ansible-playbook -vvv -i hosts playbooks/kubernetes-common.yml"
-    }
-    
-    provisioner "local-exec" {
-        working_dir = "../ansible"
-        command     = "ansible-playbook -vvv -i hosts playbooks/kubernetes-master.yml" 
-    }
-
-    provisioner "local-exec" {
-        working_dir = "../ansible"
-        command     = "ansible-playbook -vvv -i hosts playbooks/kubernetes-worker.yml"
+        command     = "ansible-playbook -vvv -i hosts playbooks/kubernetes-common.yml playbooks/kubernetes-master.yml playbooks/kubernetes-worker.yml"
     }
 }
