@@ -1,5 +1,7 @@
 - hosts: 'workers, masters'
   gather_facts: True
   become: true
+  become_user: root
+  become_method: sudo
   roles:
     - kubernetes.common

@@ -1,5 +1,7 @@
 - hosts: workers
   gather_facts: true
   become: true
+  become_user: root
+  become_method: sudo
   roles:
     - kubernetes.worker
