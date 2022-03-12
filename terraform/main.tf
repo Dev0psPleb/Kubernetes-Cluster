@@ -35,41 +35,10 @@ module "master" {
   dns_suffix_list = var.dns_suffix_list
 }
 
-module "worker" {
-  source                = "./modules/vsphere-vm"
-  depends_on            = [module.master]
-  dc                    = var.dc
-  vmrp                  = var.vmrp
-  content_library       = var.content_library
-  vmtemp                = var.vmtemp
-  instances             = 2
-  cpu_number            = var.cpu_number
-  ram_size              = var.ram_size
-  disk_size_gb          = 16
-  vmname                = "worker"
-  vmnameformat          = var.vmnameformat
-  annotation            = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
-  datastore             = var.datastore
-  ipv4submask           = [local.cidr_prefix]
-  vmgateway             = "11.11.11.110"
-  network = {
-    "${var.network}" = ["11.11.11.98", "11.11.11.99"]
+resource "null_resource" "master" {
+  depends_on = [module.master.ip]
+  provisioner "local-exec" {
+    working_dir = "../ansible"
+    command     = "ansible-playbook -i hosts playbooks/users.yml"
   }
-  dns_server_list = var.dns_server_list
-  dns_suffix_list = var.dns_suffix_list
-}
-
-resource "null_resource" "ansible" {
-    depends_on          = [module.master,module.worker]
-    connection {
-        type            = "ssh"
-        user            = var.ssh_user
-        private_key     = file(var.private_key)
-        host            = module.master.ip[0]
-    }
-
-    provisioner "local-exec" {
-        working_dir = "../ansible"
-        command     = "ansible-playbook -vvv -i hosts playbooks/kubernetes-common.yml playbooks/kubernetes-master.yml playbooks/kubernetes-worker.yml"
-    }
 }
