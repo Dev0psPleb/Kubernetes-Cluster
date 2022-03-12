@@ -3,7 +3,15 @@
 
   tasks:
     - name: create the kube user account
-      user: name=kube append=yes state=present createhome=yes shell=/bin/bash
+      user: 
+        name: kube 
+        append: yes 
+        state: present 
+        createhome: yes 
+        shell: /bin/bash
+        password: "{{ 'kubeadmin' | password_hash('sha512') }}"
+        update_password: on_create
+      register: kubeadmin
 
     - name: allow 'kube' to use sudo without needing a password
       lineinfile:

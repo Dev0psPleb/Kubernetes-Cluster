@@ -1,6 +1,19 @@
 ---
 - name: create the kube user account
-  user: name=kube append=yes state=present createhome=yes shell=/bin/bash password="kubeadmin"
+  user: 
+    name: kube 
+    state: present 
+    createhome: yes 
+    shell: /bin/bash 
+    password: "{{ 'kubeadmin' | password_hash('sha512') }}"
+    update_password: on_create
+  register: kubeadmin
+
+- name: allow packer.prod to sudo to kube without needing a password
+  lineinfile:
+    dest: /etc/sudoers
+    line: 'packer.prod ALL=(kube) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
 
 - name: allow 'kube' to use sudo without needing a password
   lineinfile:

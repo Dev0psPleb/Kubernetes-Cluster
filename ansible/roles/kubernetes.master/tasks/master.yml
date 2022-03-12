@@ -2,12 +2,12 @@
 - name: initialize the cluster
   shell: kubeadm init --pod-network-cidr=10.244.0.0/16
   args:
-    chdir: $HOME
+    chdir: /home/kube
     creates: cluster_initialized.txt
 
 - name: create .kube directory
   file:
-    path: $HOME/.kube
+    path: /home/kube/.kube
     state: directory
     mode: 0755
 
@@ -21,7 +21,7 @@
 - name: install Pod network
   shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml 
   args:
-    chdir: $HOME
+    chdir: /home/kube
         
 - name: Get the token for joining the worker nodes
   shell: kubeadm token create  --print-join-command

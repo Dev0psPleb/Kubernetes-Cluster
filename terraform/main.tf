@@ -13,21 +13,21 @@ locals {
 }
 
 module "master" {
-  source                = "./modules/vsphere-vm"
-  dc                    = var.dc
-  vmrp                  = var.vmrp
-  content_library       = var.content_library
-  vmtemp                = var.vmtemp
-  instances             = 1
-  cpu_number            = var.cpu_number
-  ram_size              = var.ram_size
-  disk_size_gb          = 16
-  vmname                = "master"
-  vmnameformat          = var.vmnameformat
-  annotation            = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
-  datastore             = var.datastore
-  ipv4submask           = [local.cidr_prefix]
-  vmgateway             = "11.11.11.110"
+  source          = "./modules/vsphere-vm"
+  dc              = var.dc
+  vmrp            = var.vmrp
+  content_library = var.content_library
+  vmtemp          = var.vmtemp
+  instances       = 1
+  cpu_number      = var.cpu_number
+  ram_size        = var.ram_size
+  disk_size_gb    = 16
+  vmname          = "master"
+  vmnameformat    = var.vmnameformat
+  annotation      = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
+  datastore       = var.datastore
+  ipv4submask     = [local.cidr_prefix]
+  vmgateway       = "11.11.11.110"
   network = {
     "${var.network}" = ["11.11.11.97"]
   }
@@ -39,6 +39,6 @@ resource "null_resource" "master" {
   depends_on = [module.master.ip]
   provisioner "local-exec" {
     working_dir = "../ansible"
-    command     = "ansible-playbook -i hosts playbooks/users.yml"
+    command     = "ansible-playbook -i hosts playbooks/users.yml playbooks/install-k8s.yml"
   }
 }
