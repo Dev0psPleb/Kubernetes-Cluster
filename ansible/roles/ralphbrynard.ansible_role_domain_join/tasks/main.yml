@@ -1,0 +1,191 @@
+---
+
+- name: Install AD Domain packages
+  package:
+    name: 
+      - sssd
+      - sssd-ad
+      - sssd-tools
+      - realmd
+      - adcli
+      - krb5-user
+      - libnss-sss
+      - libpam-sss
+      - samba-common-bin
+    state: present
+    #update_cache: yes
+  tags: ad
+
+- name: show ansible_distribution values
+  debug: msg="{{ansible_distribution}};{{ansible_distribution_version}};{{ansible_distribution_major_version}}"
+
+- name: install pip3
+  apt: name=python3-pip state=present
+- name: pexpect for creating kerberos ticket
+  pip:
+    name: pexpect
+
+- name: update sshd config for kerberos auth
+  lineinfile:
+    state: present
+    path: /etc/ssh/sshd_config
+    regexp: '^[# ]*{{ item.search }}\s*'
+    line: '{{ item.replace }}'
+  with_items:
+    - { search: 'GSSAPIAuthentication', replace: 'GSSAPIAuthentication yes' }
+    - { search: 'GSSAPICleanupCredentials', replace: 'GSSAPICleanupCredentials no' }
+  register: sshd_config_results
+- name: restart ssh service
+  service:
+    name: ssh
+    state: restarted
+  when: sshd_config_results.changed 
+
+- name: get realmd service facts
+  service_facts:
+
+- name: realmd service
+  debug:
+    var: ansible_facts.services["realmd.service"]
+
+- name: enable and start realmd service
+  systemd:
+    enabled: yes
+    state: started
+    name: realmd
+
+# fist method of checking if domain already joined, marker file we created
+- name: domain joined marker file
+  stat:
+    path: /etc/sssd/{{realm_domain}}.joined
+  register: domain_joined_marker_file
+
+- name: Discover realm
+  command: /bin/bash -c "/usr/sbin/realm discover {{ realm_domain_server }} -v"
+  register: realm_discover_results
+  tags: ad
+- name: Discover realm debug
+  debug: 
+    msg: "{{ realm_discover_results.stdout_lines }}"
+
+# second method of checking if domain is already joined, realm list
+- name: Checking to see if system is already joined to AD, realm list
+  command: /bin/bash -c "/usr/sbin/realm list"
+  register: realm_list_results
+  tags: ad
+- name: Debug realm_list_results
+  debug: 
+    msg: "{{ realm_list_results.stdout_lines }}"
+
+# third method of checking if domain is already joined
+- name: Checking to see if system is already joined to AD, kinit host
+  command: /bin/bash -c "kinit -k host/$(hostname -f)"
+  register: kinit_results
+  failed_when: not kinit_results.rc in [0,1]
+  tags: ad
+
+- name: deploy realmd.conf
+  template:
+    src: realmd.conf.j2
+    dest: /etc/realmd.conf
+    mode: 0600
+  become: True
+
+- name: debug realm join
+  debug: msg="{{domain_joined_marker_file.stat.exists}}"
+
+- name: Join system to AD
+  expect:
+    command: /bin/bash -c "/usr/sbin/realm join -v --user={{ kerberos_user }} {{ realm_domain }} --computer-ou='{{ realm_ad_ou }}' --install=/"
+    responses:
+      (?i)Password: "{{ kerberos_user_password }}"  
+  ignore_errors: False
+  register: domain_join_results
+  when: kinit_results.rc != 0 and not domain_joined_marker_file.stat.exists
+  become: true
+  tags: ad
+
+- name: create AD join marker file, because realm list will return empty if id_provider=ldap
+  copy:
+    dest: "/etc/sssd/{{realm_domain}}.joined"
+    content: '{{domain_join_results}}'
+    owner: root
+    group: root
+    mode: 664
+  #when: domain_join_results is defined and domain_join_results.rc == 0 and domain_join_results.changed
+  when: domain_join_results.changed and not domain_joined_marker_file.stat.exists
+
+- name: enable home directory creation
+  become: true
+  # --force overwrites current PAM without question
+  # --package would lower priority of manual prompt (--package required by xenial or you get prompt)
+  command: pam-auth-update --enable mkhomedir --force --package
+
+- name: deploy minimal sssd.conf
+  template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    # service will error if 644 
+    mode: 0600
+  become: True 
+  register: sssd_config_changed
+  notify: restart_sssd
+
+# make sure sssd restart happens immediately if necessary (instead of by handler at end)
+- name: Flush handlers
+  meta: flush_handlers
+
+- name: add AD groups to sudoers
+  become: True
+  lineinfile:
+    dest: /etc/sudoers
+    line: '%{{item}}   ALL=(ALL)       NOPASSWD: ALL'
+  with_items: "{{sudoers_group_login}}"
+  when: sudoers_group_login is defined
+
+- name: deploy krb5.conf
+  template:
+    src: krb5.conf.j2
+    dest: /etc/krb5.conf
+    # krb5_child.log will have error with create_ccache permission denied
+    # if AD user cannot read file, hence need to have read for group+other
+    # also mode=1777 on /tmp and ownership by root.root
+    mode: 0644
+  become: True
+  notify:
+    - restart_sssd
+
+
+- name: check if AD domain available
+  command: adcli info {{ realm_domain }}
+  register: adcli_info_results
+  failed_when: "adcli_info_results.rc not in [0,1]"
+
+- name: Create kerberos ticket
+  expect:
+    command: /bin/bash -c "KRB5_TRACE=/tmp/kinit_krb5.log /usr/bin/kinit -V {{kerberos_user}}@{{realm_domain}}"
+    responses:
+      (?i)Password: "{{ kerberos_user_password }}"
+  when: adcli_info_results.rc == 0
+  tags: ad
+- name: list kerberos tickets
+  command: klist
+  when: adcli_info_results.rc == 0
+
+- name: retrieve user information with id
+  command: id {{kerberos_user}}@{{realm_domain}}
+  register: id_result
+  retries: 3
+  delay: 30
+  until: id_result.rc == 0
+- name: show id result
+  debug: msg="{{id_result}}"
+
+- name: retrieve user information with getent, requires krb5.conf
+  command: getent passwd {{kerberos_user}}@{{realm_domain}}
+
+
+#- name: system leaves AD
+#  command: /bin/bash -c "/usr/sbin/realm leave --user={{ kerberos_user }} {{ realm_domain }}"
+#  ignore_errors: yes
+#  become: true

@@ -1,0 +1,14 @@
+---
+- name: Enable and Start chronyd
+  service:
+    name: "{{chronyd_service_name}}"
+    #name: "{{ chronyd_service_name | default('chronyd') }}"
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Restart chronyd
+  service: 
+    name: "{{chronyd_service_name}}"
+    state: restarted
+  become: yes

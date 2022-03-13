@@ -1,0 +1,40 @@
+---
+__sssd_debian: "{{ ansible_os_family == 'Debian' }}"
+__sssd_redhat: "{{ ansible_os_family == 'RedHat' }}"
+
+__sssd_debian_sssd_packages:
+  - libnss-sss
+  - libpam-sss
+  - sssd
+  - sssd-tools
+  - ldap-utils
+__sssd_redhat_sssd_packages:
+  - authconfig
+  - sssd
+
+sssd_oddjob_mkhomedir: True
+sssd_oddjob_packages:
+  - oddjob
+  - oddjob-mkhomedir
+
+sssd_authconfig: "{{ ['enablemkhomedir', 'enablesssdauth'] if sssd_oddjob_mkhomedir else ['enablesssdauth'] }}"
+
+sssd_deploy_facts: True
+
+sssd_packages: "{{ __sssd_debian_sssd_packages if __sssd_debian else __sssd_redhat_sssd_packages }}"
+
+sssd_services:
+  nss:
+    debug_level: 9
+    filter_users: nobody,root,ubuntu
+    filter_groups: nobody,root,ubuntu,denied rodc password replication group
+  pam:
+    debug_level: 9
+    pam_verbosity: 3
+    offline_credentials_expiration: 3
+
+sssd_sssd:
+  config_file_version: 2
+  override_space: '_'
+
+sssd_local_ldap_cert_dir: .

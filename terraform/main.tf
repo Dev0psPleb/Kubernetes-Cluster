@@ -21,6 +21,42 @@ data "template_file" "ansible_hosts" {
   }
 }
 
+data "template_file" "ansible_vars" {
+  template = file("../ansible/vars/vars.yml.tpl")
+  vars = {
+    realm                     = var.realm
+    realm_domain              = var.realm_domain
+    realm_domain_server       = var.realm_domain_server
+    kerberos_user             = var.kerberos_user
+    kerberos_user_password    = var.kerberos_user_password
+    realm_ad_ou               = var.realm_ad_ou
+    sssd_testuser             = var.kerberos_user
+    krb5_server               = var.krb5_server
+    krb5_realm                = var.krb5_realm
+    ldap_uri                  = var.ldap_uri
+    ldap_default_bind_dn      = var.ldap_default_bind_dn
+    ldap_default_authtok      = var.ldap_default_authtok
+    ldap_default_authtok_type = var.ldap_default_authtok_type
+    ldap_search_base          = var.ldap_search_base
+    ldap_user_search_base     = var.ldap_search_base
+    ldap_user_object_class    = var.ldap_user_object_class
+    ldap_user_gecos           = var.ldap_user_gecos
+    ldap_group_search_base    = var.ldap_search_base
+    ldap_group_object_class   = var.ldap_group_object_class
+    ldap_user_name            = var.ldap_user_name
+    ldap_user_principal       = var.ldap_user_principal
+    ldap_group_name           = var.ldap_group_name
+    ldap_user_objectsid       = var.ldap_user_objectsid
+    ldap_group_objectsid      = var.ldap_group_objectsid
+    ldap_user_primary_group   = var.ldap_user_primary_group
+  }
+}
+
+resource "local_file" "ansible_vars" {
+  content         = data.template_file.ansible_vars.rendered
+  filename        = "../ansible/vars/vars.yml"
+}
+
 resource "local_file" "ansible_hosts" {
   content         = data.template_file.ansible_hosts.rendered
   filename        = "../ansible/hosts"
@@ -89,4 +125,14 @@ resource "null_resource" "ansible" {
     provisioner "local-exec" {
         command     = "export KUBECONFIG=../ansible/.kube/config"
     }
+}
+
+resource "null_resource" "domain-join" {
+  provisioner "local-exec" {
+    working_dir = "../ansible"
+    command     = <<-EOT
+    ansible-playbook -i hosts playbooks/kubernetes-common.yml \
+      --vars-file ./vars/vars.yml
+    EOT
+  }
 }

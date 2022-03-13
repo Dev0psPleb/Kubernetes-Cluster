@@ -1,0 +1,77 @@
+---
+
+- name: show ansible_distribution values
+  debug: msg="{{ansible_distribution}};{{ansible_distribution_version}};{{ansible_distribution_major_version}}"
+- name: set default name for chrony service
+  set_fact:
+    chronyd_service_name: chronyd
+
+- name: set default name for chrony service on older xenial
+  set_fact:
+    chronyd_service_name: chrony
+  when: ansible_distribution_major_version|int == 16
+
+- name: show final chrony service name being used
+  debug: msg="final service name {{chronyd_service_name}}"
+
+- name: Install chrony
+  package:
+    name: chrony
+    state: present
+  become: yes
+  notify: Enable and Start chronyd
+  tags:
+    - time
+    - ntp
+    - common
+
+- name: Configure chrony
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  notify: Restart chronyd
+  register: chrony_configured
+  tags:
+    - time
+    - ntp
+    - common
+    - config
+    - testntp
+
+- name: chrony tracking
+  command: chronyc tracking
+  register: chrony_tracking_results
+  tags: [ testntp ]
+- name: show chonry tracking
+  debug: msg="{{chrony_tracking_results}}"
+  tags: [ testntp ]
+
+
+# can sometimes fail on first invocation
+- name: show chrony sources
+  command: chronyc sources
+  register: chronyc_sources
+  when: chrony_configured.changed
+  retries: 3
+  delay: 10
+  until: chronyc_sources.rc == 0
+  tags: [ testntp ]
+
+
+#- name: test chrony against ntp server
+#  become: yes
+#  command: chronyd -q 'server {{item.name.split()[0]}} iburst'
+#  register: chrony_test_results
+#  with_items: "{{wtd_chrony_cfg_servers | default([]) }}"
+#  #when: chrony_configured.changed
+#  tags: [ testntp ]
+#
+#- name: show chrony test against ntp server
+#  debug: msg="{{item.stdout_lines}}"
+#  with_items: "{chrony_results.results}}"
+#  when: chrony_results is defined and chrony_results.results is defined
+#  tags: [ testntp ]

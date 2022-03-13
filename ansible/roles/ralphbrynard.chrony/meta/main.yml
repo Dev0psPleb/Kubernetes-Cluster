@@ -1,0 +1,27 @@
+dependencies: []
+
+galaxy_info:
+  role_name: chrony
+  author: Fabian Lee
+  description: A role that installs chrony and configures it.
+  company: while-true-do.org
+
+  github_branch: master
+  license: BSD
+
+  min_ansible_version: 2.0
+
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  - name: Ubuntu
+    versions:
+    - xenial
+    - bionic
+    - focal
+
+  galaxy_tags:
+    - time
+    - config
+    - chrony

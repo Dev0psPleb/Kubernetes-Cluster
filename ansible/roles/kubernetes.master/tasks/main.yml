@@ -1,3 +1,4 @@
 ---
 # tasks file for kubernetes.master
 - include: master.yml
+- include: kubeconfig.yml
