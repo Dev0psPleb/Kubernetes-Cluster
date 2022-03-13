@@ -6,19 +6,20 @@ provider "vsphere" {
 }
 
 locals {
-  vm_ip_cidr    = lookup(var.vm_network, var.network)
-  cidr_prefix   = tonumber(element(split("/", local.vm_ip_cidr), 1))
-  build_version = formatdate("YY.MM", timestamp())
-  build_date    = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
+  vm_ip_cidr      = lookup(var.vm_network, var.network)
+  cidr_prefix     = tonumber(element(split("/", local.vm_ip_cidr), 1))
+  default_gateway = tostring(element(split("/", local.vm_ip_cidr), 0))
+  build_version   = formatdate("YY.MM", timestamp())
+  build_date      = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
 }
 
 data "template_file" "ansible_hosts" {
   template = file("../ansible/hosts.tpl")
   vars = {
-    ansible_user  = var.ssh_user
-    master_ip     = module.master.ip[0]
-    worker1_ip    = module.worker.ip[0]
-    worker2_ip    = module.worker.ip[1]
+    ansible_user = var.ssh_user
+    master_ip    = module.master.ip[0]
+    worker1_ip   = module.worker.ip[0]
+    worker2_ip   = module.worker.ip[1]
   }
 }
 
@@ -78,7 +79,7 @@ module "master" {
   annotation      = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
   datastore       = var.datastore
   ipv4submask     = [local.cidr_prefix]
-  vmgateway       = "11.11.11.110"
+  vmgateway       = local.default_gateway
   network = {
     "${var.network}" = [""]
   }
@@ -102,7 +103,7 @@ module "worker" {
   annotation      = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
   datastore       = var.datastore
   ipv4submask     = [local.cidr_prefix]
-  vmgateway       = "11.11.11.110"
+  vmgateway       = local.default_gateway
   network = {
     "${var.network}" = ["", ""]
   }
