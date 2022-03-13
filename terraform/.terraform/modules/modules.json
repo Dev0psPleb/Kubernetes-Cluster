@@ -1,1 +1,1 @@
-{"Modules":[{"Key":"vm","Source":"./modules/vsphere-vm","Dir":"modules/vsphere-vm"},{"Key":"","Source":"","Dir":"."},{"Key":"master","Source":"./modules/vsphere-vm","Dir":"modules/vsphere-vm"},{"Key":"worker","Source":"./modules/vsphere-vm","Dir":"modules/vsphere-vm"}]}
+{"Modules":[{"Key":"master","Source":"./modules/vsphere-vm","Dir":"modules/vsphere-vm"},{"Key":"worker","Source":"./modules/vsphere-vm","Dir":"modules/vsphere-vm"},{"Key":"vm","Source":"./modules/vsphere-vm","Dir":"modules/vsphere-vm"},{"Key":"","Source":"","Dir":"."}]}
