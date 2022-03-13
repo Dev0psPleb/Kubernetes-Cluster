@@ -3,5 +3,5 @@ output "master_ip" {
 }
 
 output "worker_ip" {
-    value = module.worker.ip
+  value = module.worker.ip
 }

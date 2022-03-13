@@ -1,6 +1,0 @@
-[masters]
-master ansible_host=11.11.11.97 ansible_user=packer.prod
-
-[workers]
-worker01 ansible_host=11.11.11.98 ansible_user=packer.prod
-worker02 ansible_host=11.11.11.99 ansible_user=packer.prod
