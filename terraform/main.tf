@@ -15,9 +15,10 @@ locals {
 data "template_file" "ansible_hosts" {
   template = file("../ansible/hosts.tpl")
   vars = {
-    master_ip  = module.master.ip[0]
-    worker1_ip = module.worker.ip[0]
-    worker2_ip = module.worker.ip[1]
+    ansible_user  = var.ssh_user
+    master_ip     = module.master.ip[0]
+    worker1_ip    = module.worker.ip[0]
+    worker2_ip    = module.worker.ip[1]
   }
 }
 
