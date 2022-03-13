@@ -119,20 +119,6 @@ resource "null_resource" "ansible" {
         command     = "ansible-playbook -i hosts playbooks/kubernetes-common.yml playbooks/kubernetes-master.yml playbooks/kubernetes-worker.yml"
     }
     provisioner "local-exec" {
-        working_dir = "../ansible"
-        command     = "ansible-playbook -i hosts playbooks/kube-config.yml"
-    }
-    provisioner "local-exec" {
         command     = "export KUBECONFIG=../ansible/.kube/config"
     }
-}
-
-resource "null_resource" "domain-join" {
-  provisioner "local-exec" {
-    working_dir = "../ansible"
-    command     = <<-EOT
-    ansible-playbook -i hosts playbooks/kubernetes-common.yml \
-      --vars-file ./vars/vars.yml
-    EOT
-  }
 }
