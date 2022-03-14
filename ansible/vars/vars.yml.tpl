@@ -25,3 +25,6 @@ ldap_group_name: ${ldap_group_name}
 ldap_user_objectsid: ${ldap_user_objectsid}
 ldap_group_objectsid: ${ldap_group_objectsid}
 ldap_user_primary_group: ${ldap_user_primary_group}
+time_server: ${time_server}
+smallstep_enrollment_token: ${smallstep_enrollment_token}
+team_id: ${team_id}

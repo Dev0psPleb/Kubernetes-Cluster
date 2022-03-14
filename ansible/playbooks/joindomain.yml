@@ -1,0 +1,93 @@
+- hosts: all
+  gather_facts: true
+  become: true
+  become_user: root
+  become_method: sudo
+  vars_files:
+    - "../vars/vars.yml"
+  roles:
+    - ralphbrynard.chrony
+    - ralphbrynard.ansible_role_domain_join
+    - ralphbrynard.ansible_sssd
+  
+  vars:
+    realm: "{{ realm }}"
+    realm_domain: "{{ realm_domain }}"
+    realm_domain_server: "{{ realm_domain_server }}"
+    kerberos_user: "{{ kerberos_user }}"
+    kerberos_user_password: "{{ kerberos_user_password }}"
+    realm_ad_ou: "{{ realm_ad_ou }}"
+    sssd_sudoers: [ '%sudoUsers', '%linux_admins' ]
+    sssd_testuser: "{{ kerberos_user }}"
+    krb5_server: "{{ krb5_server }}"
+    krb5_realm: "{{  krb5_realm }}"
+    ldap_uri: "{{ ldap_uri }}"
+    ldap_default_bind_dn: "{{ ldap_default_bind_dn }}"
+    ldap_default_authtok: "{{ ldap_default_authtok }}"
+    ldap_default_authtok_type: "{{ ldap_default_authtok_type }}"
+    ldap_search_base: "{{ ldap_search_base }}"
+    ldap_user_search_base: "{{ ldap_user_search_base }}"
+    ldap_user_object_class: "{{ ldap_user_object_class }}"
+    ldap_user_gecos: "{{ ldap_user_gecos }}"
+    ldap_group_search_base: "{{ ldap_group_search_base }}"
+    ldap_group_object_class: "{{ ldap_group_object_class }}"
+    ldap_user_name: "{{ ldap_user_name }}"
+    ldap_user_principal: "{{ ldap_user_principal }}"
+    ldap_group_name: "{{ ldap_group_name }}" 
+    ldap_user_objectsid: "{{ ldap_user_objectsid }}"
+    ldap_group_objectsid: "{{ ldap_group_objectsid }}"
+    ldap_user_primary_group: "{{ ldap_user_primary_group }}"
+    wtd_chrony_cfg_servers:
+      - name: "'{{ time_server }}'' iburst maxpoll 10"
+    sssd_oddjob_mkhomedir: True
+    sssd_domains:
+      THEBRYNARDS.COM:
+        debug_level: 9
+
+        id_provider: ldap
+        auth_provider: krb5
+        access_provider: ldap
+        sudo_provider: ldap
+
+        use_fully_qualified_names: False
+
+        krb5_server: "{{ krb5_server }}"
+        krb5_realm: "{{ krb5_realm }}"
+        krb5_store_password_if_offline: True
+        realmd_tags: manages-system joined-with-adcli
+
+        ldap_uri: "{{ ldap_uri }}"
+        ldap_schema: AD
+        ldap_id_use_start_tls: false
+
+        ldap_default_bind_dn: "{{ ldap_default_bind_dn }}"
+        ldap_default_authtok: "{{ ldap_default_authtok }}"
+        ldap_default_authtok_type: "{{ ldap_default_authtok_type }}"
+
+        ldap_search_base: "{{ ldap_search_base }}"
+        ldap_user_search_base: "{{ ldap_search_base }}"
+        ldap_user_object_class: "{{ ldap_user_object_class }}"
+        ldap_user_gecos: "{{ ldap_user_gecos }}"
+        ldap_group_search_base: "{{ ldap_group_search_base }}"
+        ldap_group_object_class: "{{ ldap_group_object_class }}"
+        ldap_user_name: "{{ ldap_user_name }}"
+        ldap_user_principal: "{{ ldap_user_principal }}"
+        ldap_group_name: "{{ ldap_group_name }}"
+        ldap_user_objectsid: "{{ ldap_user_objectsid }}"
+        ldap_group_objectsid: "{{ ldap_group_objectsid }}"
+        ldap_user_primary_group: "{{ ldap_user_primary_group }}"
+        ldap_id_mapping: True
+        ldap_disable_range_retrieval: True
+        ldap_referrals: False
+
+        min_id: 10000
+        override_shell: /bin/bash
+        case_sensitive: False
+        ignore_group_members: True
+        fallback_homedir: /home/%d/%u
+        cache_credentials: true
+
+        dyndns_update: true
+        dyndns_refresh_interval: 43200
+        dyndns_update_ptr: true
+        dyndns_ttl: 3600

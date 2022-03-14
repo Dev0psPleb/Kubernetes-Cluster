@@ -1,0 +1,35 @@
+- hosts: worker02
+  gather_facts: True
+  become: True
+  vars_files:
+    - "../vars/vars.yml"
+  vars: 
+    enrollment_token: "{{ smallstep_enrollment_token }}"
+    team_id: thebrynards
+  roles:
+    - role: maxhoesel.smallstep.step_cli
+
+  tasks:
+    - name: Step SSH Bootstrap host
+      vars:
+        file: "../vars/vars.yml"
+      command: 'step-cli ca bootstrap --team={{ team_id }}'
+      ignore_errors: true
+
+    - name: Get SSH Certificate
+      vars:
+        enrollment_token: "{{ smallstep_enrollment_token }}"
+      command: 'step-cli ssh certificate {{ ansible_hostname }} /etc/ssh/ssh_host_ecdsa_key.pub --host --sign --provisioner AzureAD --token {{ enrollment_token }} --principal {{ ansible_fqdn }}'
+    - debug:
+        msg: 
+          - "Enrollment token is: {{ smallstep_enrollment_token }}"
+          - "Hostname is: '{{ ansible_hostname }}'" 
+    
+    - name: Configure SSH Certificate Authentication
+      command: 'step-cli ssh config --host --set Certificate=ssh_host_ecdsa_key-cert.pub --set Key=ssh_host_ecdsa_key'
+
+    - name: Activate PAM/NSS Modules & HUP SSHD
+      command: 'step-cli step-ssh activate {{ ansible_hostname }}'
+    
+    - name: Register host and add tags
+      command: 'step-cli step-ssh-ctl register --hostname {{ ansible_hostname }} --tag key=ssh --tag value=true --tag key=sudo --tag value=true' 

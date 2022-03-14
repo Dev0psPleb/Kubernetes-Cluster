@@ -1,0 +1,19 @@
+- name: Set smallstep environment variables
+  environment:
+    enrollment_token: "{{ enrollment_token }}"
+
+- name: Issue host SSH certificate
+  become: True
+  command: /bin/bash -c "step ssh certificate $(hostname -f) /etc/ssh/ssh_host_ecdsa_key.pub --host --sign --provisioner AzureAD --token $enrollment_token"
+
+- name: Configure SSH Certificate Authentication
+  become: True
+  command: /bin/bash -c "step ssh config --host --set Certificate=ssh_host_ecdsa_key-cert.pub --set Key=ssh_host_ecdsa_key"
+
+- name: Active PAM/NSS modules
+  become: True
+  command: /bin/bash -c "step-ssh activate $(hostname -f)"
+
+- name: Register SSH Host
+  become: True
+  command: /bin/bash -c "step-ssh-ctl register --tag sudo=true --tag ssh=true --hostname $(hostname -f)"

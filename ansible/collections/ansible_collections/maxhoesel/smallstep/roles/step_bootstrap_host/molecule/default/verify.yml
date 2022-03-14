@@ -1,0 +1,16 @@
+---
+- name: Verify
+  hosts: clients
+  tasks:
+    - name: Verify that root is able to access ca
+      command: step-cli ca health
+      become: yes
+      changed_when: no
+      environment:
+        STEPPATH: /etc/step-cli-molecule
+
+    - name: Attempt to access CA URL
+      uri:
+        url: https://step-ca.localdomain
+      failed_when: ca_query.status != 404
+      register: ca_query

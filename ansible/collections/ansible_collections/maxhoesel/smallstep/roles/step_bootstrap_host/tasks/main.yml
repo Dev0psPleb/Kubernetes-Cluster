@@ -1,0 +1,35 @@
+---
+- include: check.yml
+
+- name: STEPPATH is present
+  file:
+    path: "{{ step_cli_steppath }}"
+    owner: root
+    group: root
+    mode: "750"
+    state: directory
+
+- name: Host is bootstrapped
+  maxhoesel.smallstep.step_ca_bootstrap:
+    ca_url: "{{ step_bootstrap_ca_url }}"
+    fingerprint: "{{ step_bootstrap_fingerprint }}"
+    step_cli_executable: "{{ step_cli_executable }}"
+    force: "{{ step_bootstrap_force | d(omit) }}"
+  become: yes
+  environment:
+    STEPPATH: "{{ step_cli_steppath }}"
+
+- name: Check if cert is already installed
+  command: "{{ step_cli_executable }} certificate verify {{ step_cli_steppath }}/certs/root_ca.crt"
+  become: yes
+  changed_when: no
+  check_mode: no
+  failed_when: step_bootstrap_installed.rc not in [0,1]
+  register: step_bootstrap_installed
+  when: step_bootstrap_install_cert
+
+- name: Install CA cert into trust stores
+  command: "step-cli certificate install {{ step_cli_steppath }}/certs/root_ca.crt --all"
+  when:
+    - step_bootstrap_install_cert
+    - step_bootstrap_force or step_bootstrap_installed.rc != 0

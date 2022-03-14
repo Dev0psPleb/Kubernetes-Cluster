@@ -1,0 +1,93 @@
+---
+- name: Look for existing install
+  stat:
+    path: "{{ step_ca_path }}/config/ca.json"
+  register: step_ca_config
+
+# Always create the intermediate password file as it is needed for CA operation
+- name: Intermediate password file is present
+  copy:
+    content: "{{ step_ca_intermediate_password }}"
+    dest: "{{ step_ca_intermediate_password_file }}"
+    owner: "{{ step_ca_user }}"
+    mode: 0600
+    group: "{{ step_ca_user }}"
+  no_log: yes
+
+- block:
+    - name: Create root and password file # noqa no-changed-when
+      copy:
+        content: "{{ step_ca_root_password }}"
+        dest: "{{ step_ca_root_password_file }}"
+        owner: "{{ step_ca_user }}"
+        mode: 0600
+        group: "{{ step_ca_user }}"
+      no_log: yes
+    - name: Initialize CA # noqa no-changed-when
+      command: >-
+        {{ step_cli_executable }} ca init
+        --name={{ step_ca_name | quote }}
+        --dns={{ step_ca_dns | quote }}
+        --address={{ step_ca_address | quote }}
+        --provisioner={{ step_ca_tmp_provisioner | quote }}
+        --password-file={{ step_ca_root_password_file | quote }}
+        --provisioner-password-file={{ step_ca_root_password_file | quote }}
+        {% if step_ca_url is defined %} --with-ca-url={{ step_ca_url | quote }}{% endif %}
+        {% if step_ca_ssh %} --ssh{% endif %}
+        {% if step_ca_existing_root_file is defined %} --root={{ step_ca_existing_root_file | quote }}{% endif %}
+        {% if step_ca_existing_key_file is defined %} --key={{ step_ca_existing_key_file | quote }}{% endif %}
+        {% if step_ca_ra is defined %} --ra={{ step_ca_ra | quote }}{% endif %}
+        {% if step_ca_ra_issuer is defined %} --issuer={{ step_ca_ra_issuer | quote }}{% endif %}
+        {% if step_ca_ra_credentials_file is defined %} --credentials-file={{ step_ca_ra_credentials_file | quote }}{% endif %}
+      environment:
+        STEPPATH: "{{ step_ca_path }}"
+      become: yes
+      become_user: "{{ step_ca_user }}"
+
+    - name: Change password for intermediate key # noqa no-changed-when
+      shell: |
+        set timeout 300
+        spawn {{ step_cli_executable }} crypto change-pass {{ step_ca_path }}/secrets/intermediate_ca_key -f
+        expect "Please enter the password to decrypt"
+        send -- "{{ step_ca_root_password }}\r"
+        expect "Please enter the password to encrypt"
+        send -- "{{ step_ca_intermediate_password }}\r"
+        expect
+      args:
+        executable: expect
+      become: yes
+      become_user: "{{ step_ca_user }}"
+
+    - name: Change password for SSH keys
+      shell: |
+        set timeout 300
+        spawn {{ step_cli_executable }} crypto change-pass {{ step_ca_path }}/secrets/{{ item }} -f
+        expect "Please enter the password to decrypt"
+        send -- "{{ step_ca_root_password }}\r"
+        expect "Please enter the password to encrypt"
+        send -- "{{ step_ca_intermediate_password }}\r"
+        expect
+      args:
+        executable: expect
+      become: yes
+      become_user: "{{ step_ca_user }}"
+      loop:
+        - ssh_host_ca_key
+        - ssh_user_ca_key
+      when: step_ca_ssh
+
+    - name: Remove initial provisioner
+      maxhoesel.smallstep.step_ca_provisioner:
+        name: "{{ step_ca_tmp_provisioner }}"
+        type: JWK
+        state: absent
+      environment:
+        STEPPATH: "{{ step_ca_path }}"
+      become: yes
+      become_user: "{{ step_ca_user }}"
+  always:
+    - name: Root password file is absent
+      file:
+        path: "{{ step_ca_root_password_file }}"
+        state: absent
+  when: not step_ca_config.stat.exists

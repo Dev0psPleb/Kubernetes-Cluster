@@ -133,9 +133,11 @@ variable "vsphere_user" {
   type        = string
 }
 
+variable "smallstep_enrollment_token" {}
+variable "team_id" {}
 ## Ansible Playbook Variables ##
 ## Chrony Vars
-variable "wtd-chrony-cfg-server" {
+variable "time_server" {
   description = "Time server to use"
   type        = string
 }
