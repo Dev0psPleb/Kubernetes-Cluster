@@ -1,0 +1,10 @@
+---
+- name: Download Smallstep step-ssh utils for Debian hosts
+  get_url:
+    url: https://dl.step.sm/s3/ssh/docs-ssh-host-step-by-step/step-ssh_0.20.2_amd64.deb
+    dest: /tmp/step-ssh_0.20.2_amd64.deb
+
+- name: Install step-ssh utilities
+  apt: 
+    deb: /tmp/step-ssh_0.20.2_amd64.deb
+    state: present

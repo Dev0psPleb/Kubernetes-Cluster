@@ -13,11 +13,20 @@ locals {
   build_date      = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
 }
 
+locals {
+  portgroup       = lookup(var.portgroup, var.network)
+  ipv4submask     = local.portgroup.cidr_prefix
+  vmgateway       = local.portgroup.default_gateway
+  dns_server_list = local.portgroup.dns_server_list
+  dns_suffix_list = local.portgroup.dns_suffix_list
+  domain          = local.portgroup.dns_suffix_list[0]
+}
+
 data "template_file" "ansible_cfg" {
   template = file("../ansible/ansible.cfg.tpl")
   vars = {
-    private_key  = var.private_key
-    ansible_user = var.ssh_user
+    private_key_file = var.private_key
+    ansible_user     = var.ssh_user
   }
 }
 
@@ -65,7 +74,7 @@ data "template_file" "ansible_vars" {
   }
 }
 
-resoucr "local_file" "ansible_cfg" {
+resource "local_file" "ansible_cfg" {
   content  = data.template_file.ansible_cfg.rendered
   filename = "../ansible/ansible.cfg"
 }
@@ -80,6 +89,7 @@ resource "local_file" "ansible_hosts" {
   filename = "../ansible/hosts"
 }
 
+
 module "master" {
   source          = "./modules/vsphere-vm"
   dc              = var.dc
@@ -91,17 +101,17 @@ module "master" {
   ram_size        = var.ram_size
   disk_size_gb    = 16
   vmname          = "k8s-master"
-  domain          = var.domain
+  domain          = local.domain
   vmnameformat    = var.vmnameformat
   annotation      = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
   datastore       = var.datastore
-  ipv4submask     = [local.cidr_prefix]
-  vmgateway       = local.default_gateway
+  ipv4submask     = local.ipv4submask
+  vmgateway       = local.vmgateway
   network = {
     "${var.network}" = [""]
   }
-  dns_server_list = var.dns_server_list
-  dns_suffix_list = var.dns_suffix_list
+  dns_server_list = local.dns_server_list
+  dns_suffix_list = local.dns_suffix_list
 }
 
 
@@ -117,17 +127,17 @@ module "worker" {
   ram_size        = var.ram_size
   disk_size_gb    = 16
   vmname          = "k8s-worker"
-  domain          = var.domain
+  domain          = local.domain
   vmnameformat    = var.vmnameformat
   annotation      = "VER: ${local.build_version}\nDATE: ${local.build_date}\nSRC: ${var.build_repo} (${var.build_branch})"
   datastore       = var.datastore
-  ipv4submask     = [local.cidr_prefix]
-  vmgateway       = local.default_gateway
+  ipv4submask     = local.ipv4submask
+  vmgateway       = local.vmgateway
   network = {
     "${var.network}" = ["", ""]
   }
-  dns_server_list = var.dns_server_list
-  dns_suffix_list = var.dns_suffix_list
+  dns_server_list = local.dns_server_list
+  dns_suffix_list = local.dns_suffix_list
 }
 
 resource "null_resource" "ansible" {
@@ -140,9 +150,11 @@ resource "null_resource" "ansible" {
     working_dir = "../ansible"
     command     = <<-EOT
       ansible-playbook -i hosts playbooks/kubernetes-common.yml \
-                                playbooks/kuberentes-master.yml \
+                                playbooks/kubernetes-master.yml \
                                 playbooks/kubernetes-worker.yml \
-                                playbooks/joindomain.yml 
+                                playbooks/joindomain.yml \
+                                playbooks/smallstep-ssh-utils.yml \
+                                playbooks/smalstep.yml
     EOT
   }
   provisioner "local-exec" {

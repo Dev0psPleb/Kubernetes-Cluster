@@ -1,0 +1,10 @@
+---
+- name: Download Smallstep step-ssh utils for RHEL hosts
+  get_url:
+    url: https://dl.step.sm/s3/ssh/docs-ssh-host-step-by-step/step-ssh_0.20.2_x86_64.rpm
+    dest: /tmp/step-ssh_0.20.2_x86_64.rpm
+
+- name: Install step-ssh utiltiies
+  yum: 
+    name: /tmp/step-ssh_0.20.2_x86_64.rpm
+    state: present

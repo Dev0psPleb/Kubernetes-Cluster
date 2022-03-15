@@ -19,24 +19,7 @@
     realm_ad_ou: "{{ realm_ad_ou }}"
     sssd_sudoers: [ '%sudoUsers', '%linux_admins' ]
     sssd_testuser: "{{ kerberos_user }}"
-    krb5_server: "{{ krb5_server }}"
-    krb5_realm: "{{  krb5_realm }}"
-    ldap_uri: "{{ ldap_uri }}"
-    ldap_default_bind_dn: "{{ ldap_default_bind_dn }}"
-    ldap_default_authtok: "{{ ldap_default_authtok }}"
-    ldap_default_authtok_type: "{{ ldap_default_authtok_type }}"
-    ldap_search_base: "{{ ldap_search_base }}"
-    ldap_user_search_base: "{{ ldap_user_search_base }}"
-    ldap_user_object_class: "{{ ldap_user_object_class }}"
-    ldap_user_gecos: "{{ ldap_user_gecos }}"
-    ldap_group_search_base: "{{ ldap_group_search_base }}"
-    ldap_group_object_class: "{{ ldap_group_object_class }}"
-    ldap_user_name: "{{ ldap_user_name }}"
-    ldap_user_principal: "{{ ldap_user_principal }}"
-    ldap_group_name: "{{ ldap_group_name }}" 
-    ldap_user_objectsid: "{{ ldap_user_objectsid }}"
-    ldap_group_objectsid: "{{ ldap_group_objectsid }}"
-    ldap_user_primary_group: "{{ ldap_user_primary_group }}"
+    
     wtd_chrony_cfg_servers:
       - name: "'{{ time_server }}'' iburst maxpoll 10"
     sssd_oddjob_mkhomedir: True
@@ -59,6 +42,7 @@
         ldap_uri: "{{ ldap_uri }}"
         ldap_schema: AD
         ldap_id_use_start_tls: false
+        ldap_access_filter: (objectClass=user)
 
         ldap_default_bind_dn: "{{ ldap_default_bind_dn }}"
         ldap_default_authtok: "{{ ldap_default_authtok }}"

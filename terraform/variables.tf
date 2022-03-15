@@ -63,11 +63,6 @@ variable "instances" {
   default     = 1
 }
 
-variable "network" {
-  description = "VMWare Network, either distributed port-group or portgroup"
-  type        = string
-}
-
 variable "private_key" {
   description = "Path to the private key file for the SSH user"
   type        = string
@@ -140,6 +135,27 @@ variable "team_id" {}
 variable "time_server" {
   description = "Time server to use"
   type        = string
+}
+
+variable "network" {
+  default = "app_vlan"
+}
+
+variable "portgroup" {
+  default = {
+    app_vlan = {
+      cidr_prefix     = ["28"]
+      default_gateway = "11.11.11.110"
+      dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.110"]
+      dns_suffix_list = ["app.thebrynards.com", "thebrynards.com"]
+    },
+    servers_vlan = {
+      cidr_prefix     = "28"
+      default_gateway = "11.11.11.126"
+      dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.126"]
+      dns_suffix_list = ["thebrynards.com"]
+    }
+  }
 }
 
 # Ansible KRB5
