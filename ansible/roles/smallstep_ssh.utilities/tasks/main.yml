@@ -1,0 +1,7 @@
+---
+# tasks file for smallstep_ssh.utilities
+- include_tasks: sshutils-deb.yml
+  when: ansible_os_family == "Debian"
+
+- include_tasks: sshutils-rpm.yml
+  when: ansible_os_family == "RedHat"
