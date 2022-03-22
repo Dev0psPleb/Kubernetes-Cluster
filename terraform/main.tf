@@ -154,7 +154,9 @@ resource "null_resource" "ansible" {
                                 playbooks/kubernetes-worker.yml \
                                 playbooks/joindomain.yml \
                                 playbooks/smallstep-ssh-utils.yml \
-                                playbooks/smalstep.yml
+                                playbooks/smallstep.yml \
+                                playbooks/gh-actins-runner.yml \
+                                playbooks/loadbalancer.yml
     EOT
   }
   provisioner "local-exec" {

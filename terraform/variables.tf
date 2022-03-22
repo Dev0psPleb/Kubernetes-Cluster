@@ -130,6 +130,7 @@ variable "vsphere_user" {
 
 variable "smallstep_enrollment_token" {}
 variable "team_id" {}
+variable "tf_api_token" {}
 ## Ansible Playbook Variables ##
 ## Chrony Vars
 variable "time_server" {
@@ -147,12 +148,18 @@ variable "portgroup" {
       cidr_prefix     = ["28"]
       default_gateway = "11.11.11.110"
       dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.110"]
-      dns_suffix_list = ["app.thebrynards.com", "thebrynards.com"]
+      dns_suffix_list = ["thebrynards.com", "app.thebrynards.com"]
     },
     servers_vlan = {
       cidr_prefix     = "28"
       default_gateway = "11.11.11.126"
       dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.126"]
+      dns_suffix_list = ["thebrynards.com"]
+    },
+    users_vlan = {
+      cidr_prefix     = "26"
+      default_gateway = "11.11.2.62"
+      dns_server_list = ["11.11.2.62"]
       dns_suffix_list = ["thebrynards.com"]
     }
   }
