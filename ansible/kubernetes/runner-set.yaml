@@ -1,0 +1,18 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerSet
+metadata:
+  name: runner-set
+  namespace: actions-runner-system
+spec:
+  ephemeral: true
+  replicas: 2
+  repository: RalphBrynard/vsphere-packer-builds
+  selector:
+    matchLabels:
+      app: runner
+  serviceName: runner
+  template:
+    metadata:
+      labels:
+        app: runner
+

@@ -5,32 +5,38 @@
   vars:
     KUBECONFIG: ../.kube/config
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    APP_ID: 181998
-    INSTALLATION_ID: 24232027
-    PRIVATE_KEY_FILE_PATH: ../secrets/gh-self-hoster-runners.2022-03-18.private-key.pem
+    APP_ID: 183012
+    INSTALLATION_ID: 24339405
+    PRIVATE_KEY_FILE_PATH: "{{ lookup('file','../secrets/ralphbrynard-actions-controller.2022-03-22.private-key.pem') }}"
 
   tasks:
+    - debug:
+        msg: 
+        - "{{ PRIVATE_KEY_FILE_PATH | b64encode }}"
+        - "{{ APP_ID | b64encode }}"
+        - "{{ INSTALLATION_ID | b64encode }}"
+        
     - name: Download Certmanager manifest
       ansible.builtin.get_url:
         url: https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-        dest: ../kubernetes/cert-manager.yaml
+        dest: ../kubernetes/remote/cert-manager.yaml
         mode: '0664'
 
     - name: Download Kubernetes Github Actions Runner Controller definition
       ansible.builtin.get_url:
         url: https://github.com/actions-runner-controller/actions-runner-controller/releases/download/v0.22.0/actions-runner-controller.yaml
-        dest: ../kubernetes/actions-runner-controller.yaml
+        dest: ../kubernetes/remote/actions-runner-controller.yaml
         mode: '0664'
 
     - name: Deploy Cert Manager
       kubernetes.core.k8s:
-        src: '../kubernetes/cert-manager.yaml'
+        src: '../kubernetes/remote/cert-manager.yaml'
         kubeconfig: '../.kube/config'
         state: present
 
     - name: Deploy Github Actions Runner Controller
       kubernetes.core.k8s:
-        src: '../kubernetes/actions-runner-controller.yaml'
+        src: '../kubernetes/remote/actions-runner-controller.yaml'
         kubeconfig: '../.kube/config'
         state: present
     
@@ -50,22 +56,11 @@
             github_app_installation_id: '{{ INSTALLATION_ID | b64encode }}'
             github_app_private_key: '{{ PRIVATE_KEY_FILE_PATH | b64encode }}'
     
-    - name: Runner Deployment
+    - name: Deploy Runner Set Deployment
       kubernetes.core.k8s:
         state: present
         kubeconfig: '{{ KUBECONFIG }}'
-        definition:
-          apiVersion: actions.summerwind.dev/v1alpha1
-          kind: RunnerDeployment
-          metadata:
-            name: runner-deployment
-            namespace: actions-runner-system
-          spec:
-            template:
-              labels:
-                app: github
-              spec:
-                repository: RalphBrynard/vsphere-packer-builds
+        src: '../kubernetes/runner-set.yaml'
     
     - name: Horizontal Runner Autoscaler
       kubernetes.core.k8s:
@@ -75,11 +70,11 @@
           apiVersion: actions.summerwind.dev/v1alpha1
           kind: HorizontalRunnerAutoscaler
           metadata:
-            name: runner-deployment
+            name: runner-set
             namespace: actions-runner-system
           spec:
             scaleTargetRef:
-              name: runner-deployment
+              name: runner-set
             minReplicas: 1
             maxReplicas: 5
             metrics:

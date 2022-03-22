@@ -153,13 +153,22 @@ resource "null_resource" "ansible" {
                                 playbooks/kubernetes-master.yml \
                                 playbooks/kubernetes-worker.yml \
                                 playbooks/joindomain.yml \
-                                playbooks/smallstep-ssh-utils.yml \
-                                playbooks/smallstep.yml \
-                                playbooks/gh-actins-runner.yml \
-                                playbooks/loadbalancer.yml
+                                playbooks/smallstep.yml 
     EOT
   }
   provisioner "local-exec" {
     command = "export KUBECONFIG=../ansible/.kube/config"
+  }
+}
+
+resource "null_resource" "gh-actions-runner" {
+  depends_on = [null_resource.ansible]
+
+  provisioner "local-exec" {
+    working_dir = "../ansible"
+    command     = <<-EOT
+      ansible-playbook -i hosts playbooks/gh-actions-runner.yml \
+                                playbooks/loadbalancer.yml 
+    EOT
   }
 }
