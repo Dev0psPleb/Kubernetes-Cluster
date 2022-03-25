@@ -1,0 +1,78 @@
+---
+- hosts: masters
+  gather_facts: true
+  connection: local
+  vars:
+    KUBECONFIG: ../.kube/config
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    configMap: "{{ lookup('k8s',
+      api_version='v1',
+      kind='ConfigMap',
+      namespace='kube-system',
+      resource='kube-proxy',
+      output=yaml) }}"
+    addressPool: "11.11.11.96/28"
+
+  tasks:
+    - name: does configmap exist?
+      command: kubectl describe configmap kube-proxy -n kube-system --kubeconfig '{{ KUBECONFIG }}'
+      failed_when: not configmap_res.rc in [0,1]
+      register: configmap_res
+    
+    - name: show configmap results, 0=found,1=not found
+      debug:
+        msg: '{{ configmap_res }}'
+    
+    - name: kubectl to update existing configmap
+      shell:
+        'kubectl get configmap kube-proxy -n kube-system --kubeconfig {{ KUBECONFIG }} -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system --kubeconfig {{ KUBECONFIG }}'
+      when: configmap_res.rc == 0
+    
+    - name: show final configmap
+      command: kubectl describe configmap kube-proxy -n kube-system --kubeconfig {{ KUBECONFIG }}
+      register: final_output
+
+    - debug:
+        msg: "{{ final_output.stdout_lines }}"
+    
+    - name: Download MetalLB Namespace Manifest
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
+        dest: ../manifests/remote/namespace.yaml
+        mode: '0664'
+    
+    - name: Deploy MetalLB Namespace Manifest
+      kubernetes.core.k8s:
+        kubeconfig: '{{ KUBECONFIG }}'
+        src: '../manifests/remote/namespace.yaml'
+        state: present
+    
+    - name: Download MetalLB Manifest
+      ansible.builtin.get_url: 
+        url: https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+        dest: ../manifests/remote/metallb.yaml
+        mode: '0664'
+    
+    - name: Deploy MetalLB Manifest
+      kubernetes.core.k8s:
+        kubeconfig: '{{ KUBECONFIG }}'
+        src: '../manifests/remote/metallb.yaml'
+        state: present
+    
+    - name: Deploy MetalLB Layer 2 ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: '{{ KUBECONFIG }}'
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            namespace: metallb-system
+            name: config
+          data:
+            config: |
+              address-pools:
+              - name: default
+                protocol: layer2
+                addresses: 
+                - '{{ addressPool }}'

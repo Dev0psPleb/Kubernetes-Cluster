@@ -40,8 +40,8 @@ data "template_file" "ansible_hosts" {
   }
 }
 
-data "template_file" "ansible_vars" {
-  template = file("../ansible/vars/vars.yml.tpl")
+data "template_file" "join_domain_vars" {
+  template = file("../ansible/vars/join_domain_vars.yml.tpl")
   vars = {
     realm                      = var.realm
     realm_domain               = var.realm_domain
@@ -69,6 +69,21 @@ data "template_file" "ansible_vars" {
     ldap_group_objectsid       = var.ldap_group_objectsid
     ldap_user_primary_group    = var.ldap_user_primary_group
     time_server                = var.time_server
+  }
+}
+
+data "template_file" "github_actions_vars" {
+  template = file("../ansible/vars/github_actions_vars.yaml.tpl")
+  vars = {
+    APP_ID                      = var.github_app_id
+    INSTALLATION_ID             = var.github_app_installation_id
+    PRIVATE_KEY_FILE_PATH       = var.github_app_private_key_file
+  }
+}
+
+data "template_file" "smallstep_vars" {
+  template = file("../ansible/vars/smallstep_vars.yaml.tpl")
+  vars = {
     smallstep_enrollment_token = var.smallstep_enrollment_token
     team_id                    = var.team_id
   }
@@ -79,9 +94,19 @@ resource "local_file" "ansible_cfg" {
   filename = "../ansible/ansible.cfg"
 }
 
-resource "local_file" "ansible_vars" {
-  content  = data.template_file.ansible_vars.rendered
-  filename = "../ansible/vars/vars.yml"
+resource "local_file" "join_domain_vars" {
+  content  = data.template_file.join_domain_vars.rendered
+  filename = "../ansible/vars/join_domain_vars.yml"
+}
+
+resource "local_file" "smallstep_vars" {
+  content   = data.template_file.smallstep_vars.rendered
+  filename  = "../ansible/vars/smallstep_vars.yaml"
+}
+
+resource "local_file" "github_actions_vars" {
+  content   = data.template_file.github_actions_vars.rendered
+  filename  = "../ansible/vars/github_actions_vars.yaml"
 }
 
 resource "local_file" "ansible_hosts" {
@@ -140,7 +165,7 @@ module "worker" {
   dns_suffix_list = local.dns_suffix_list
 }
 
-resource "null_resource" "ansible" {
+resource "null_resource" "initial_config" {
   depends_on = [
     module.master.ip,
     module.worker.ip
@@ -151,24 +176,10 @@ resource "null_resource" "ansible" {
     command     = <<-EOT
       ansible-playbook -i hosts playbooks/kubernetes-common.yml \
                                 playbooks/kubernetes-master.yml \
-                                playbooks/kubernetes-worker.yml \
-                                playbooks/joindomain.yml \
-                                playbooks/smallstep.yml 
+                                playbooks/kubernetes-worker.yml 
     EOT
   }
   provisioner "local-exec" {
     command = "export KUBECONFIG=../ansible/.kube/config"
-  }
-}
-
-resource "null_resource" "gh-actions-runner" {
-  depends_on = [null_resource.ansible]
-
-  provisioner "local-exec" {
-    working_dir = "../ansible"
-    command     = <<-EOT
-      ansible-playbook -i hosts playbooks/gh-actions-runner.yml \
-                                playbooks/loadbalancer.yml 
-    EOT
   }
 }

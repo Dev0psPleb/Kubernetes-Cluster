@@ -131,6 +131,9 @@ variable "vsphere_user" {
 variable "smallstep_enrollment_token" {}
 variable "team_id" {}
 variable "tf_api_token" {}
+variable "github_app_id" {}
+variable "github_app_installation_id" {}
+variable "github_app_private_key_file" {}
 ## Ansible Playbook Variables ##
 ## Chrony Vars
 variable "time_server" {

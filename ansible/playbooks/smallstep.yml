@@ -2,7 +2,7 @@
   gather_facts: True
   become: True
   vars_files:
-    - "../vars/vars.yml"
+    - "../vars/smallstep_vars.yml"
   vars: 
     enrollment_token: "{{ smallstep_enrollment_token }}"
     team_id: thebrynards
@@ -12,7 +12,7 @@
   tasks:
     - name: Step SSH Bootstrap host
       vars:
-        file: "../vars/vars.yml"
+        file: "../vars/smallstep_vars.yml"
       command: 'step-cli ca bootstrap --team={{ team_id }}'
       args:
         creates: '{{ ansible_env.HOME}}/.step/'

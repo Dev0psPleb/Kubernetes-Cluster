@@ -1,0 +1,9 @@
+---
+- name: Download Cloud Optix On-Boarding Script
+  ansible.builtin.get_url:
+    src: 'https://avidcore.s3-us-west-2.amazonaws.com/kubernetes/onboard-kubernetes.sh'
+    dest: '/tmp/oboard-kubernetes.sh'
+    mode: a+x
+
+- name: Onboard Cluster into Cloud Optix
+  command: '/bin/bash -C CUSTOMER_ID={{ CUSTOMER_ID }} REQUEST_ID={{ REQUEST_ID }} /tmp/onboard-kubernetes.sh'
