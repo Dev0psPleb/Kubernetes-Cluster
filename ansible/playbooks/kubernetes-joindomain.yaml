@@ -4,7 +4,7 @@
   become_user: root
   become_method: sudo
   vars_files:
-    - "../vars/join_domain_vars.yml"
+    - "../vars/join_domain_vars.yaml"
   roles:
     - ralphbrynard.chrony
     - ralphbrynard.ansible_role_domain_join

@@ -2,7 +2,7 @@
   gather_facts: True
   become: True
   vars_files:
-    - "../vars/smallstep_vars.yml"
+    - "../vars/smallstep_vars.yaml"
   vars: 
     enrollment_token: "{{ smallstep_enrollment_token }}"
     team_id: thebrynards
