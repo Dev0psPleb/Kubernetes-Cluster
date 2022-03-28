@@ -1,0 +1,41 @@
+---
+- hosts: masters
+  gather_facts: true
+  connection: local
+  vars:
+    KUBECONFIG: ../.kube/config
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    PRIVATE_KEY_FILE: "{{ lookup('file','{{ PRIVATE_KEY_FILE_PATH }}') | b64encode }}"
+  vars_files:
+    - "../vars/github_actions_vars.yaml"
+  
+  tasks:
+    
+    - name: Deploy Runner Set
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: '{{ KUBECONFIG }}'
+        src: '../manifests/runner_set.yaml'
+    
+    - name: Deploy Service Account, Role and Role Bindings
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: '{{ KUBECONFIG }}'
+        src: '../manifests/serviceaccount.yaml'
+    
+    - name: Get Service Account Secret
+      shell: 
+        "kubectl -n default get serviceaccount/my-pod-port-forward -o jsonpath='{.secrets[0].name}' --kubeconfig '{{ KUBECONFIG }}'"
+      register: TOKENNAME
+    
+    - debug:
+        msg:
+        - "{{ TOKENNAME.stdout_lines }}"
+    
+    - name: Get token
+      shell:
+       "kubectl -n default get secret/{{ TOKENNAME }} -o jsonpath='{.data.token}' --kubeconfig '{{ KUBECONFIG }}'| base64 -d"
+      register: TOKEN
+    
+    - debug:
+        msg: "{{ TOKEN }}"

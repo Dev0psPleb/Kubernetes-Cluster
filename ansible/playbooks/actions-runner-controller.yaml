@@ -5,38 +5,38 @@
   vars:
     KUBECONFIG: ../.kube/config
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    APP_ID: 183012
-    INSTALLATION_ID: 24339405
-    PRIVATE_KEY_FILE_PATH: "{{ lookup('file','../secrets/ralphbrynard-actions-controller.2022-03-22.private-key.pem') }}"
+    PRIVATE_KEY_FILE: "{{ lookup('file','{{ PRIVATE_KEY_FILE_PATH }}') }}"
+  vars_files:
+    - "../vars/github_actions_vars.yaml"
 
   tasks:
     - debug:
         msg: 
-        - "{{ PRIVATE_KEY_FILE_PATH | b64encode }}"
+        - "{{ PRIVATE_KEY_FILE | b64encode }}"
         - "{{ APP_ID | b64encode }}"
         - "{{ INSTALLATION_ID | b64encode }}"
         
     - name: Download Certmanager manifest
       ansible.builtin.get_url:
         url: https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-        dest: ../kubernetes/remote/cert-manager.yaml
+        dest: ../manifests/remote/cert-manager.yaml
         mode: '0664'
 
     - name: Download Kubernetes Github Actions Runner Controller definition
       ansible.builtin.get_url:
         url: https://github.com/actions-runner-controller/actions-runner-controller/releases/download/v0.22.0/actions-runner-controller.yaml
-        dest: ../kubernetes/remote/actions-runner-controller.yaml
+        dest: ../manifests/remote/actions-runner-controller.yaml
         mode: '0664'
 
     - name: Deploy Cert Manager
       kubernetes.core.k8s:
-        src: '../kubernetes/remote/cert-manager.yaml'
+        src: '../manifests/remote/cert-manager.yaml'
         kubeconfig: '../.kube/config'
         state: present
 
     - name: Deploy Github Actions Runner Controller
       kubernetes.core.k8s:
-        src: '../kubernetes/remote/actions-runner-controller.yaml'
+        src: '../manifests/remote/actions-runner-controller.yaml'
         kubeconfig: '../.kube/config'
         state: present
     
@@ -54,34 +54,4 @@
           data:
             github_app_id: '{{ APP_ID | b64encode }}'
             github_app_installation_id: '{{ INSTALLATION_ID | b64encode }}'
-            github_app_private_key: '{{ PRIVATE_KEY_FILE_PATH | b64encode }}'
-    
-    - name: Deploy Runner Set Deployment
-      kubernetes.core.k8s:
-        state: present
-        kubeconfig: '{{ KUBECONFIG }}'
-        src: '../kubernetes/runner-set.yaml'
-    
-    - name: Horizontal Runner Autoscaler
-      kubernetes.core.k8s:
-        state: present
-        kubeconfig: '{{ KUBECONFIG }}'
-        definition:
-          apiVersion: actions.summerwind.dev/v1alpha1
-          kind: HorizontalRunnerAutoscaler
-          metadata:
-            name: runner-set
-            namespace: actions-runner-system
-          spec:
-            scaleTargetRef:
-              name: runner-set
-            minReplicas: 1
-            maxReplicas: 5
-            metrics:
-              - type: TotalNumberofQueuedAndInProgressWorkflowRuns
-                repositoryNames:
-                - RalphBrynard/vsphere-packer-builds
-
-
-
-
+            github_app_private_key: '{{ PRIVATE_KEY_FILE | b64encode }}'

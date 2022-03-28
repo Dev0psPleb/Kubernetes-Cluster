@@ -1,0 +1,3 @@
+---
+# tasks file for linux.common
+- include: install-ovf-tool.yaml

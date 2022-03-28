@@ -5,3 +5,7 @@ output "master_ip" {
 output "worker_ip" {
   value = module.worker.ip
 }
+
+output "kube_config" {
+  value = file("../ansible/.kube/config")
+}

@@ -1,0 +1,16 @@
+---
+- name: Copy OVF Tool to hosts
+  ansible.builtin.copy:
+    src: '../VMware-ovftool-4.4.3-18663434-lin.x86_64.bundle'
+    dest: '/tmp/VMware-ovftool-4.4.3-18663434-lin.x86_64.bundle'
+    mode: a+x
+   
+- name: Install OVF tool
+  command: '/bin/bash -C /tmp/VMware-ovftool-4.4.3-18663434-lin.x86_64.bundle --console --required --eulas-agreed'
+    
+- name: Verify OVF Tool is installed
+  command: '/usr/bin/ovftool --version'
+  register: ovftool_version
+
+- debug:
+    msg: "{{ ovftool_version.stdout_lines }}"

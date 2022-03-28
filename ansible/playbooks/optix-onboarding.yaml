@@ -1,0 +1,17 @@
+---
+- hosts: masters
+  gather_facts: true
+  vars:
+    KUBECONFIG: ../.kube/config
+
+  tasks:
+  - name: Download Cloud Optix On-Boarding Script
+    ansible.builtin.get_url:
+      url: 'https://avidcore.s3-us-west-2.amazonaws.com/kubernetes/onboard-kubernetes.sh'
+      dest: '/home/kube/onboard-kubernetes.sh'
+      mode: a+x
+
+  - name: Onboard Cluster into Cloud Optix
+    shell: 
+      cmd: 'CUSTOMER_ID={{ CUSTOMER_ID }} REQUEST_ID={{ REQUEST_ID }} bash onboard-kubernetes.sh'
+      chdir: "/home/kube"

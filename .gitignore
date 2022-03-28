@@ -36,3 +36,8 @@ terraform.rc
 ansible/secrets*
 terraform/kubernetes-cluster.tfrc
 terraform/backend.tf
+ansible/hosts
+ansible/ansible.cfg
+ansible/vars/github_actions_vars.yaml
+ansible/vars/join_domain_vars.yml
+ansible/vars/smallstep_vars.yaml
