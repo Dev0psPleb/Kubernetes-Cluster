@@ -1,3 +1,5 @@
+# Version Control Variables
+
 variable "build_repo" {
   description = "Version Control Repository"
   default     = "https://github.com/RalphBrynard/Kubernetes-Cluster.git"
@@ -8,6 +10,7 @@ variable "build_branch" {
   default     = "main"
 }
 
+# vSphere Variables
 variable "cluster" {
   description = "vSphere Datacenter compute cluster"
   type        = string
@@ -47,44 +50,50 @@ variable "disk_size_gb" {
   default     = null
 }
 
-variable "dns_server_list" {
-  description = "List of DNS Servers to use"
-  type        = list(any)
-}
-
-variable "dns_suffix_list" {
-  description = "List of DNS Suffix to apply to the VM"
-  type        = list(string)
-}
-
 variable "instances" {
   description = "Number of VM instances to deploy"
   type        = number
   default     = 1
 }
 
-variable "private_key" {
-  description = "Path to the private key file for the SSH user"
-  type        = string
+variable "network" {
+  description = "Name of the portgroup to map the network configuration"
+  default     = "app_vlan"
+}
+
+variable "portgroup" {
+  description = "Mapping of network names to portgroups and portgroup configurations"
+  default = {
+    app_vlan = {
+      cidr_prefix     = ["28"]
+      default_gateway = "11.11.11.110"
+      dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.110"]
+      dns_suffix_list = ["thebrynards.com", "app.thebrynards.com"]
+    },
+    servers_vlan = {
+      cidr_prefix     = "28"
+      default_gateway = "11.11.11.126"
+      dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.126"]
+      dns_suffix_list = ["thebrynards.com"]
+    },
+    users_vlan = {
+      cidr_prefix     = "26"
+      default_gateway = "11.11.2.62"
+      dns_server_list = ["11.11.2.62"]
+      dns_suffix_list = ["thebrynards.com"]
+    }
+  }
 }
 
 variable "ram_size" {
   description = "Memory to allocate for the VM"
   type        = number
-  default     = 2048
+  default     = 4096
 }
 
 variable "ssh_user" {
   description = "User to use for SSH connection"
   type        = string
-}
-
-variable "vm_network" {
-  description = "Map of VLAN subnet CIDR's"
-  type        = map(any)
-  default = {
-    app_vlan = "11.11.11.110/28"
-  }
 }
 
 variable "vapp_name" {
@@ -128,12 +137,6 @@ variable "vsphere_user" {
   type        = string
 }
 
-variable "smallstep_enrollment_token" {}
-variable "team_id" {}
-variable "tf_api_token" {}
-variable "github_app_id" {}
-variable "github_app_installation_id" {}
-variable "github_app_private_key_file" {}
 ## Ansible Playbook Variables ##
 ## Chrony Vars
 variable "time_server" {
@@ -141,55 +144,141 @@ variable "time_server" {
   type        = string
 }
 
-variable "network" {
-  default = "app_vlan"
+# Smallstep Ansible Playbook Variables
+variable "smallstep_enrollment_token" {
+  description = "Smalstep SSH enrollment token"
+  default     = ""
 }
 
-variable "portgroup" {
-  default = {
-    app_vlan = {
-      cidr_prefix     = ["28"]
-      default_gateway = "11.11.11.110"
-      dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.110"]
-      dns_suffix_list = ["thebrynards.com", "app.thebrynards.com"]
-    },
-    servers_vlan = {
-      cidr_prefix     = "28"
-      default_gateway = "11.11.11.126"
-      dns_server_list = ["11.11.11.113", "11.11.11.114", "11.11.11.126"]
-      dns_suffix_list = ["thebrynards.com"]
-    },
-    users_vlan = {
-      cidr_prefix     = "26"
-      default_gateway = "11.11.2.62"
-      dns_server_list = ["11.11.2.62"]
-      dns_suffix_list = ["thebrynards.com"]
-    }
-  }
+variable "team_id" {
+  description = "Smallstep SSH Team ID"
+  default     = ""
 }
 
-# Ansible KRB5
-variable "realm" {}
-variable "realm_domain" {}
-variable "realm_domain_server" {}
-variable "kerberos_user" {}
-variable "kerberos_user_password" {}
-variable "realm_ad_ou" {}
+# GitHub Actions Runner Playbook Variables
+variable "github_app_id" {
+  description = "GitHub Application ID"
+  default     = ""
+}
+
+variable "github_app_installation_id" {
+  description = "GitHub App Installation ID"
+  default     = ""
+}
+
+variable "github_app_private_key_file" {
+  description = "GitHub App Private Key file"
+  default     = ""
+}
+
+variable "private_key" {
+  description = "Path to the private key file for the SSH user"
+  type        = string
+}
+
+# Ansible Join Domain Variables
+variable "realm" {
+  description = "Domain Realm; Kerberos Authentication."
+  default     = "CONTOSO"
+}
+
+variable "realm_domain" {
+  description = "Domain Name"
+  default     = "CONTOSO.COM"
+}
+
+variable "realm_domain_server" {
+  description = "KRB5 Admin Server"
+}
+
+variable "kerberos_user" {
+  description = "KRB5 user to join the host to the domain. Preferrably a service account"
+}
+
+variable "kerberos_user_password" {
+  description = "KRB5 User password"
+  sensitive   = true
+}
+
+variable "realm_ad_ou" {
+  description = "OU that host should populate when joined to the domain"
+}
 
 # Ansible SSSD
-variable "krb5_server" {}
-variable "krb5_realm" {}
-variable "ldap_uri" {}
-variable "ldap_default_bind_dn" {}
-variable "ldap_default_authtok" {}
-variable "ldap_default_authtok_type" {}
-variable "ldap_search_base" {}
-variable "ldap_user_object_class" {}
-variable "ldap_user_gecos" {}
-variable "ldap_group_object_class" {}
-variable "ldap_user_name" {}
-variable "ldap_user_principal" {}
-variable "ldap_group_name" {}
-variable "ldap_user_objectsid" {}
-variable "ldap_group_objectsid" {}
-variable "ldap_user_primary_group" {}
+variable "krb5_server" {
+  description = "KRB5 admin server that issues Kerberos Tickets"
+}
+
+variable "krb5_realm" {
+  description = "Same as realm_domain"
+}
+
+variable "ldap_uri" {
+  description = "Ldap search URI"
+  default     = "ldap://domain_controller.contoso.com:389"
+}
+
+variable "ldap_default_bind_dn" {
+  description = "Distinguished name of the service account that will perform the domain join."
+  default     = "DN=svc_account,CN=Users,DC=contoso,DC=com"
+}
+
+variable "ldap_default_authtok" {
+  description = "Password for ldap_default_bind_dn"
+  sensitive   = true
+}
+
+variable "ldap_default_authtok_type" {
+  description = "Default authentication token type. Default is password"
+  default     = "password"
+}
+
+variable "ldap_search_base" {
+  description = "LDAP Search base for user objects"
+  default     = "DC=contoso,DC=com"
+}
+
+variable "ldap_user_object_class" {
+  description = "LDAP attribute for identifying user objects"
+  default     = "user"
+}
+
+variable "ldap_user_gecos" {
+  description = "GECOS field to hold non-unix object attributes"
+  default     = "name"
+}
+
+variable "ldap_group_object_class" {
+  description = "LDAP attribute for identifying group objects"
+  default     = "group"
+}
+
+variable "ldap_user_name" {
+  description = "User name attribute"
+  default     = "sAMAccountName"
+}
+
+variable "ldap_user_principal" {
+  description = "User Principal Name"
+  default     = "userPrincipalName"
+}
+
+variable "ldap_group_name" {
+  description = "Attribute for identifying groups"
+  default     = "CN"
+}
+
+variable "ldap_user_objectsid" {
+  description = "User Object Security Identifier"
+  default     = "objectSid"
+}
+
+variable "ldap_group_objectsid" {
+  description = "Group Object Security Identifier"
+  default     = "objectSid"
+}
+
+variable "ldap_user_primary_group" {
+  description = "Attribute to identify user primary group"
+  default     = "primaryGroupID"
+}

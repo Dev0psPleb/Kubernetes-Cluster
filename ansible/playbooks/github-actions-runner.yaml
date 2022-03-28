@@ -16,26 +16,3 @@
         state: present
         kubeconfig: '{{ KUBECONFIG }}'
         src: '../manifests/runner_set.yaml'
-    
-    - name: Deploy Service Account, Role and Role Bindings
-      kubernetes.core.k8s:
-        state: present
-        kubeconfig: '{{ KUBECONFIG }}'
-        src: '../manifests/serviceaccount.yaml'
-    
-    - name: Get Service Account Secret
-      shell: 
-        "kubectl -n default get serviceaccount/my-pod-port-forward -o jsonpath='{.secrets[0].name}' --kubeconfig '{{ KUBECONFIG }}'"
-      register: TOKENNAME
-    
-    - debug:
-        msg:
-        - "{{ TOKENNAME.stdout_lines }}"
-    
-    - name: Get token
-      shell:
-       "kubectl -n default get secret/{{ TOKENNAME }} -o jsonpath='{.data.token}' --kubeconfig '{{ KUBECONFIG }}'| base64 -d"
-      register: TOKEN
-    
-    - debug:
-        msg: "{{ TOKEN }}"

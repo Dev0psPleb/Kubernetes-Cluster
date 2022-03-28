@@ -1,3 +1,8 @@
+# Ignore private keys and certificates
+
+*.key
+*.crt
+
 # Local .terraform directories
 **/.terraform/*
 
@@ -39,5 +44,10 @@ terraform/backend.tf
 ansible/hosts
 ansible/ansible.cfg
 ansible/vars/github_actions_vars.yaml
-ansible/vars/join_domain_vars.yml
+ansible/vars/join_domain_vars.yaml
 ansible/vars/smallstep_vars.yaml
+ansible/roles/ralphbrynard.ansible_sssd/tests
+ansible/collections/ansible_collections/maxhoesel/smallstep/roles/step_bootstrap_host/molecule/default/files
+ansible/collections/ansible_collections/maxhoesel/smallstep/tests
+ansible/collections/ansible_collections/maxhoesel/smallstep/roles
+
