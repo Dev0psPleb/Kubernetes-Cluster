@@ -146,3 +146,7 @@ dmypy.json
 maxhoesel-smallstep-*.tar.gz
 # Adding this to gitignore breaks ansible-test. so let's not do that
 #ansible_collections/
+
+# Key and Certificate files
+*.key
+*.crt

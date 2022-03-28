@@ -6,20 +6,14 @@ provider "vsphere" {
 }
 
 locals {
-  vm_ip_cidr      = lookup(var.vm_network, var.network)
-  cidr_prefix     = tonumber(element(split("/", local.vm_ip_cidr), 1))
-  default_gateway = tostring(element(split("/", local.vm_ip_cidr), 0))
-  build_version   = formatdate("YY.MM", timestamp())
-  build_date      = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-}
-
-locals {
   portgroup       = lookup(var.portgroup, var.network)
   ipv4submask     = local.portgroup.cidr_prefix
   vmgateway       = local.portgroup.default_gateway
   dns_server_list = local.portgroup.dns_server_list
   dns_suffix_list = local.portgroup.dns_suffix_list
   domain          = local.portgroup.dns_suffix_list[0]
+  build_version   = formatdate("YY.MM", timestamp())
+  build_date      = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
 }
 
 data "template_file" "ansible_cfg" {
@@ -41,43 +35,43 @@ data "template_file" "ansible_hosts" {
 }
 
 data "template_file" "join_domain_vars" {
-  template = file("../ansible/vars/join_domain_vars.yml.tpl")
+  template = file("../ansible/vars/join_domain_vars.yaml.tpl")
   vars = {
-    realm                      = var.realm
-    realm_domain               = var.realm_domain
-    realm_domain_server        = var.realm_domain_server
-    kerberos_user              = var.kerberos_user
-    kerberos_user_password     = var.kerberos_user_password
-    realm_ad_ou                = var.realm_ad_ou
-    sssd_testuser              = var.kerberos_user
-    krb5_server                = var.krb5_server
-    krb5_realm                 = var.krb5_realm
-    ldap_uri                   = var.ldap_uri
-    ldap_default_bind_dn       = var.ldap_default_bind_dn
-    ldap_default_authtok       = var.ldap_default_authtok
-    ldap_default_authtok_type  = var.ldap_default_authtok_type
-    ldap_search_base           = var.ldap_search_base
-    ldap_user_search_base      = var.ldap_search_base
-    ldap_user_object_class     = var.ldap_user_object_class
-    ldap_user_gecos            = var.ldap_user_gecos
-    ldap_group_search_base     = var.ldap_search_base
-    ldap_group_object_class    = var.ldap_group_object_class
-    ldap_user_name             = var.ldap_user_name
-    ldap_user_principal        = var.ldap_user_principal
-    ldap_group_name            = var.ldap_group_name
-    ldap_user_objectsid        = var.ldap_user_objectsid
-    ldap_group_objectsid       = var.ldap_group_objectsid
-    ldap_user_primary_group    = var.ldap_user_primary_group
-    time_server                = var.time_server
+    realm                     = var.realm
+    realm_domain              = var.realm_domain
+    realm_domain_server       = var.realm_domain_server
+    kerberos_user             = var.kerberos_user
+    kerberos_user_password    = var.kerberos_user_password
+    realm_ad_ou               = var.realm_ad_ou
+    sssd_testuser             = var.kerberos_user
+    krb5_server               = var.krb5_server
+    krb5_realm                = var.krb5_realm
+    ldap_uri                  = var.ldap_uri
+    ldap_default_bind_dn      = var.ldap_default_bind_dn
+    ldap_default_authtok      = var.ldap_default_authtok
+    ldap_default_authtok_type = var.ldap_default_authtok_type
+    ldap_search_base          = var.ldap_search_base
+    ldap_user_search_base     = var.ldap_search_base
+    ldap_user_object_class    = var.ldap_user_object_class
+    ldap_user_gecos           = var.ldap_user_gecos
+    ldap_group_search_base    = var.ldap_search_base
+    ldap_group_object_class   = var.ldap_group_object_class
+    ldap_user_name            = var.ldap_user_name
+    ldap_user_principal       = var.ldap_user_principal
+    ldap_group_name           = var.ldap_group_name
+    ldap_user_objectsid       = var.ldap_user_objectsid
+    ldap_group_objectsid      = var.ldap_group_objectsid
+    ldap_user_primary_group   = var.ldap_user_primary_group
+    time_server               = var.time_server
   }
 }
 
 data "template_file" "github_actions_vars" {
   template = file("../ansible/vars/github_actions_vars.yaml.tpl")
   vars = {
-    APP_ID                      = var.github_app_id
-    INSTALLATION_ID             = var.github_app_installation_id
-    PRIVATE_KEY_FILE_PATH       = var.github_app_private_key_file
+    APP_ID                = var.github_app_id
+    INSTALLATION_ID       = var.github_app_installation_id
+    PRIVATE_KEY_FILE_PATH = var.github_app_private_key_file
   }
 }
 
@@ -96,17 +90,17 @@ resource "local_file" "ansible_cfg" {
 
 resource "local_file" "join_domain_vars" {
   content  = data.template_file.join_domain_vars.rendered
-  filename = "../ansible/vars/join_domain_vars.yml"
+  filename = "../ansible/vars/join_domain_vars.yaml"
 }
 
 resource "local_file" "smallstep_vars" {
-  content   = data.template_file.smallstep_vars.rendered
-  filename  = "../ansible/vars/smallstep_vars.yaml"
+  content  = data.template_file.smallstep_vars.rendered
+  filename = "../ansible/vars/smallstep_vars.yaml"
 }
 
 resource "local_file" "github_actions_vars" {
-  content   = data.template_file.github_actions_vars.rendered
-  filename  = "../ansible/vars/github_actions_vars.yaml"
+  content  = data.template_file.github_actions_vars.rendered
+  filename = "../ansible/vars/github_actions_vars.yaml"
 }
 
 resource "local_file" "ansible_hosts" {
@@ -174,12 +168,9 @@ resource "null_resource" "initial_config" {
   provisioner "local-exec" {
     working_dir = "../ansible"
     command     = <<-EOT
-      ansible-playbook -i hosts playbooks/kubernetes-common.yml \
-                                playbooks/kubernetes-master.yml \
-                                playbooks/kubernetes-worker.yml 
+      ansible-playbook -i hosts playbooks/kubernetes-common.yaml \
+                                playbooks/kubernetes-master.yaml \
+                                playbooks/kubernetes-worker.yaml 
     EOT
-  }
-  provisioner "local-exec" {
-    command = "export KUBECONFIG=../ansible/.kube/config"
   }
 }

@@ -10,40 +10,29 @@
     - "../vars/github_actions_vars.yaml"
 
   tasks:
-    - debug:
-        msg: 
-        - "{{ PRIVATE_KEY_FILE | b64encode }}"
-        - "{{ APP_ID | b64encode }}"
-        - "{{ INSTALLATION_ID | b64encode }}"
         
-    - name: Download Certmanager manifest
-      ansible.builtin.get_url:
-        url: https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-        dest: ../manifests/remote/cert-manager.yaml
+    - name: Get cert-manager and actions-runner-controller definitions
+      get_url:
+        url: "{{ item }}"
+        dest: ../manifests/remote/
         mode: '0664'
+      loop:
+        - "https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml"
+        - "https://github.com/actions-runner-controller/actions-runner-controller/releases/download/v0.22.0/actions-runner-controller.yaml"
 
-    - name: Download Kubernetes Github Actions Runner Controller definition
-      ansible.builtin.get_url:
-        url: https://github.com/actions-runner-controller/actions-runner-controller/releases/download/v0.22.0/actions-runner-controller.yaml
-        dest: ../manifests/remote/actions-runner-controller.yaml
-        mode: '0664'
-
-    - name: Deploy Cert Manager
-      kubernetes.core.k8s:
-        src: '../manifests/remote/cert-manager.yaml'
-        kubeconfig: '../.kube/config'
+    - name: Deploy cert-manager and actions-runner-controller
+      k8s:
+        kubeconfig: '{{ KUBECONFIG }}'
+        src: '{{ item }}'
         state: present
+      loop:
+        - '../manifests/remote/cert-manager.yaml'
+        - '../manifests/remote/actions-runner-controller.yaml'
 
-    - name: Deploy Github Actions Runner Controller
-      kubernetes.core.k8s:
-        src: '../manifests/remote/actions-runner-controller.yaml'
-        kubeconfig: '../.kube/config'
-        state: present
-    
     - name: Create Generic Secret
       kubernetes.core.k8s:
         state: present
-        kubeconfig: '../.kube/config'
+        kubeconfig: '{{ KUBECONFIG }}'
         definition:
           kind: Secret
           apiVersion: v1

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/antonbabenko/pre-commit-terraform
-  rev: v1.62.3 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
+  rev: v1.64.0 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
   hooks:
     - id: terraform_fmt
       args:
@@ -9,14 +9,29 @@ repos:
     - id: terraform_validate
       args:
         - --args=-json
-    - id: checkov
-      args: [
-        "-d", "./terraform", 
-        "--framework", "terraform"
-      ]
+    - id: terraform_tflint
+      args:
+        - --args=--loglevel=trace
+        - --args=--enable-rule=terraform_documented_variables
+        - --args=--module
         
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.1.0
   hooks:
   - id: detect-aws-credentials
   - id: detect-private-key
+
+- repo: https://github.com/ansible/ansible-lint.git
+  rev: v4.2.0
+  hooks:
+  - id: ansible-lint
+    files : \.(yaml|yml)$
+    additional_dependencies:
+      - .[community]
+
+- repo: https://github.com/Agilicus/pre-commit-hook-k8svalidate.git
+  rev: v0.0.8
+  hooks:
+  - id: k8svalidate
+    args: [--exclude, "./ansible/playbooks/*, ./ansible/roles/*"]
+    files: .yaml$
