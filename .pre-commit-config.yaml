@@ -11,6 +11,7 @@ repos:
         - --args=-json
     - id: terraform_tflint
       args:
+        - --args=--var-file="terraform/variables.auto.tfvars"
         - --args=--loglevel=trace
         - --args=--enable-rule=terraform_documented_variables
         - --args=--module
