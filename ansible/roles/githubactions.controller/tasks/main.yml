@@ -1,0 +1,6 @@
+---
+# tasks file for githubactions.controller
+
+- include: cert-manager.yaml
+- include: create-secret.yaml
+- include: actions-runner-controller.yaml

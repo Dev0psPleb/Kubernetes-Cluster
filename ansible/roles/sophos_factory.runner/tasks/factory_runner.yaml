@@ -1,0 +1,7 @@
+---
+- name: Create Sophos Factory Runner Config File
+  template:
+    src: ../templates/config.json.j2
+    dest: ../templates/config.json
+  include_vars:
+    file: '../vars/sophos_factory_vars.yaml'

@@ -1,0 +1,47 @@
+---
+- name: Check for latest metallb version
+  uri:
+    url: https://api.github.com/repos/metallb/metallb/releases/latest
+    body_format: json
+    return_content: true
+  register: metallb_latest
+
+- debug:
+    msg: "Latest version of metallb is '{{ metallb_latest.json.tag_name }}'"
+
+- name: "Downloading metallb {{ metallb_latest.json.tag_name }}"
+  unarchive:
+    remote_src: yes
+    src: "{{ metallb_latest.json.tarball_url }}"
+    dest: "{{ role_path }}/files/"
+    keep_newer: yes
+    mode: '7777'
+    extra_opts:
+      - --strip=1
+
+- name: Deploy MetalLB
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: '{{ KUBECONFIG }}'
+    src: '{{ item }}'
+  loop:
+    - "{{ role_path }}/files/manifests/namespace.yaml"
+    - "{{ role_path }}/files/manifests/metallb.yaml"
+
+- name: Wait for metallb pods to be running
+  shell: "kubectl get pods --namespace=metallb-system --output=jsonpath='{.items[*].metadata.name}' --kubeconfig='{{ KUBECONFIG }}'"
+  register: pods_created
+  until: item in pods_created.stdout
+  retries: 10
+  delay: 30
+  with_items:
+    - controller
+    - speaker
+
+- name: Wait for metallb pods to become ready
+  shell: "kubectl wait --namespace=metallb-system --for=condition=Ready pods --selector app=metallb --timeout=600s --kubeconfig='{{ KUBECONFIG }}'"
+  register: metallb_ready
+
+- debug: var=metallb_ready.stdout_lines
+  
+

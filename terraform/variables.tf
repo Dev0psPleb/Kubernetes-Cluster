@@ -176,6 +176,51 @@ variable "private_key" {
   type        = string
 }
 
+# Sophos Factory Runner Variables
+variable "agent_id" {
+  description = "Sophos Factory Runner Agent ID"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "agent_key" {
+  description = "Sophos Factory Runner Agent Key"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "log_path" {
+  description = "Log Path for Sophos Factory Runner"
+  type        = string
+  default     = "/var/log/runner-agent"
+}
+
+variable "log_retention" {
+  description = "Default log retention period to store Sophos Factory Runner logs"
+  type        = string
+  default     = "30"
+}
+
+variable "workspace_path" {
+  description = "Workspace for Sophos Factory Runner"
+  type        = string
+  default     = "/opt/runner-agent/workspace"
+}
+
+variable "log_level" {
+  description = "Sophos Factory Runner log-level"
+  type        = string
+  default     = "info"
+}
+
+variable "log_filename_pattern" {
+  description = "Sophos Factory Runner log-filename pattern"
+  type        = string
+  default     = "runner-agent-%DATE%.log"
+}
+
 # Ansible Join Domain Variables
 variable "realm" {
   description = "Domain Realm; Kerberos Authentication."

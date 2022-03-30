@@ -1,0 +1,5 @@
+---
+# tasks file for metallb.loadbalancer
+
+- include: metallb.yaml
+  when: create_bare_metal_loadbalancer|default(false)|bool == true

@@ -1,0 +1,5 @@
+---
+# tasks file for githubactions.runner
+
+- include: runner.yaml
+  when: deploy_runner|default(false)|bool == true

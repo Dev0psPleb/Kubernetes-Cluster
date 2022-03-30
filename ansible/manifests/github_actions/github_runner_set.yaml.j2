@@ -1,0 +1,38 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerSet
+metadata:
+  name: {{ runnerset }}
+  namespace: {{ actions_runner_namespace }}
+spec:
+    ephemeral: {{ is_ephemeral }}
+    replicas: {{ no_replicas }}
+    repository: {{ github_repository }}
+    selector:
+        matchLabels:
+            app: {{ runnerset }}
+    serviceName: {{ runnerset }}
+    template:
+      spec:
+        containers:
+        - name: {{ runnerset }}
+          env: []
+      metadata:
+        labels:
+          name: {{ actions_runner_namespace }}
+          app: {{ runnerset }}
+  
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: {{ runnerset }}
+  namespace: {{ actions_runner_namespace }}
+spec:
+  scaleTargetRef:
+    name: {{ runnerset }}
+  minReplicas: {{ min_replicas }}
+  maxReplicas: {{ max_replicas }}
+  metrics:
+    - type: TotalNumberofQueuedAndInProgressWorkflowRuns
+      repositoryNames:
+      - {{ github_repository }}
