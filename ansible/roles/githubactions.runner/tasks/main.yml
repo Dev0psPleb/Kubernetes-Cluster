@@ -3,3 +3,6 @@
 
 - include: runner.yaml
   when: deploy_runner|default(false)|bool == true
+
+- include: runner-deployment.yaml
+  when: deploy_runner_deployment|default(false)|bool == true

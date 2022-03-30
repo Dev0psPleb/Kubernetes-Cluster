@@ -5,11 +5,10 @@
   vars:
     KUBECONFIG: ../.kube/config
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    runner_name: poc-runner
+    runner_name: poc
     owner: SophosPOCAutomation
-    repo_name: Sophos_POC_Automation_Project
     deploy_runner: true
-    create_bare_metal_loadbalancer: true
+    deploy_runner_deployment: true
 
   roles:
     - githubactions.runner

@@ -1,7 +1,8 @@
 apiVersion: actions.summerwind.dev/v1alpha1
 kind: Runner
 metadata:
-    name: poc-runner
+    name: poc
     namespace: default
 spec:
-    repository: SophosPOCAutomation/Sophos_POC_Automation_Project
+    organization: SophosPOCAutomation
+    env: []

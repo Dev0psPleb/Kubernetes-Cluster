@@ -1,12 +1,19 @@
 apiVersion: actions.summerwind.dev/v1alpha1
-kind: Runner
+{% if is_ephemeral is "false"|default("true",true) %}
+kind: RunnerDeployment
+metadata:
+    name: {{ runner_name }}
+    namespace: {{ runner_namespace|default("default",true) }}
+{% else %}
+kind: RunnerSet
 metadata:
     name: {{ runner_name }}
     namespace: {{ runner_namespace|default("default",true) }}
 spec:
+    ephemeral: false
+{% endif %}
 {% if repo_name is defined %}
     repository: {{ owner }}/{{ repo_name }}
 {% else %}
     organization: {{ owner }}
 {% endif %}
-    env: []
