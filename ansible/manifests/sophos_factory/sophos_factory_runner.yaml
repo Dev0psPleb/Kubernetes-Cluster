@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sophos-factory-runner
+spec:
+  selector:
+    matchLabels: sophos-factory-runner
+  template:
+    metadata:
+      labels: 
+        app: sophos-factory-runner
+    spec:
+      containers:
+      - name: sophos-factory-runner
+        image: 

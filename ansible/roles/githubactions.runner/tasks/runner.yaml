@@ -1,0 +1,46 @@
+---
+# runner.yaml
+- set_fact: runner_namespace="default"
+  when: runner_namespace is undefined
+
+- name: Generate repository runner manifest from template
+  ansible.builtin.template:
+    src: '{{ role_path}}/templates/runner.yaml.j2'
+    dest: '{{ role_path }}/files/runner-{{ repo_name }}.yaml'
+  when: repo_name is defined
+
+- name: Generate organizational runner manifest from template
+  ansible.builtin.template:
+    src: '{{ role_path}}/templates/runner.yaml.j2'
+    dest: '{{ role_path }}/files/runner-{{ owner }}.yaml'
+  when: repo_name is undefined
+
+- name: Deploy repository runner
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: '{{ KUBECONFIG }}'
+    src: '{{ role_path }}/files/runner-{{ repo_name }}.yaml'
+  when: repo_name is defined
+
+- name: Deploy organizational runner
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: '{{ KUBECONFIG }}'
+    src: '{{ role_path }}/files/runner-{{ owner }}.yaml'
+  when: repo_name is undefined
+
+- name: Wait for runner to be running
+  shell: "kubectl get pods -n {{ runner_namespace }} --output=jsonpath='{.items[*].metadata.name}' --kubeconfig='{{ KUBECONFIG }}'"
+  register: pods_created
+  until: item in pods_created.stdout
+  retries: 10
+  delay: 30
+  with_items:
+    - '{{ runner_name }}'
+
+- name: Wait for runner to become ready
+  shell: "kubectl wait pod -n {{ runner_namespace }} --for condition=Ready --selector runnerset-name={{ runner_name }} --kubeconfig='{{ KUBECONFIG }}'"
+  register: runner_ready
+
+- debug: var=runner_ready.stdout_lines
+

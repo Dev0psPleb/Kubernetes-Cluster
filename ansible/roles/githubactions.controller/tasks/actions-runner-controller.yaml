@@ -1,0 +1,33 @@
+---
+- name: Checking if actions-runner-controller v0.22.0 manifest file has already been downloaded
+  stat:
+    path: '{{ role_path }}/files/actions-runner-controller.yaml'
+  register: actions_runner_controller
+
+
+- name: Downloading actions-runner-controller v0.22.0
+  ansible.builtin.get_url:
+    url: https://github.com/actions-runner-controller/actions-runner-controller/releases/download/v0.22.0/actions-runner-controller.yaml
+    dest: '{{ role_path }}/files/actions-runner-controller.yaml'
+  when: not actions_runner_controller.stat.exists
+
+- name: Deploy actions-runner-controller v0.22.0
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: '{{ KUBECONFIG }}'
+    src: '{{ role_path }}/files/actions-runner-controller.yaml'
+
+- name: Wait for actions-runner-controller pods to be running
+  shell: "kubectl get pods --namespace=actions-runner-system --output=jsonpath='{.items[*].metadata.name}' --kubeconfig='{{ KUBECONFIG }}'"
+  register: pods_created
+  until: item in pods_created.stdout
+  retries: 10
+  delay: 30
+  with_items:
+    - controller-manager
+
+- name: Wait for actions-runner-system pods to become ready
+  shell: "kubectl wait pod -n actions-runner-system --selector control-plane=controller-manager --for condition=Ready --timeout=600s --kubeconfig='{{ KUBECONFIG }}'"
+  register: controller_manager_ready
+
+- debug: var=controller_manager_ready.stdout_lines

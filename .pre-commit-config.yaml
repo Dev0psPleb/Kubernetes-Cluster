@@ -29,10 +29,3 @@ repos:
     files : \.(yaml|yml)$
     additional_dependencies:
       - .[community]
-
-- repo: https://github.com/Agilicus/pre-commit-hook-k8svalidate.git
-  rev: v0.0.8
-  hooks:
-  - id: k8svalidate
-    args: [--exclude, "./ansible/playbooks/*, ./ansible/roles/*"]
-    files: .yaml$

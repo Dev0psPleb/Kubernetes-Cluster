@@ -5,14 +5,11 @@
   vars:
     KUBECONFIG: ../.kube/config
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
-    PRIVATE_KEY_FILE: "{{ lookup('file','{{ PRIVATE_KEY_FILE_PATH }}') | b64encode }}"
-  vars_files:
-    - "../vars/github_actions_vars.yaml"
-  
-  tasks:
-    
-    - name: Deploy Runner Set
-      kubernetes.core.k8s:
-        state: present
-        kubeconfig: '{{ KUBECONFIG }}'
-        src: '../manifests/runner_set.yaml'
+    runner_name: poc
+    owner: SophosPOCAutomation
+    deploy_runner: true
+    deploy_runner_deployment: true
+
+  roles:
+    - githubactions.runner
+    - metallb.loadbalancer

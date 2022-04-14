@@ -7,5 +7,5 @@ output "worker_ip" {
 }
 
 output "kube_config" {
-  value = file("../ansible/.kube/config")
+  value = filebase64("../ansible/.kube/config")
 }

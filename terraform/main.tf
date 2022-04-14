@@ -133,7 +133,6 @@ module "master" {
   dns_suffix_list = local.dns_suffix_list
 }
 
-
 module "worker" {
   source          = "./modules/vsphere-vm"
   depends_on      = [module.master]
@@ -159,7 +158,7 @@ module "worker" {
   dns_suffix_list = local.dns_suffix_list
 }
 
-resource "null_resource" "initial_config" {
+resource "null_resource" "kubernetes_common" {
   depends_on = [
     module.master.ip,
     module.worker.ip

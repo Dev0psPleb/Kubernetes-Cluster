@@ -1,0 +1,12 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: Runner
+metadata:
+    name: {{ runner_name }}
+    namespace: {{ runner_namespace|default("default",true) }}
+spec:
+{% if repo_name is defined %}
+    repository: {{ owner }}/{{ repo_name }}
+{% else %}
+    organization: {{ owner }}
+{% endif %}
+    env: []
